@@ -1,7 +1,7 @@
 import logging
 import queue
 import threading
-from raft_service.events import TerminateEvent
+from pyraftlib.events import TerminateEvent
 
 logger = logging.getLogger(__name__)
 

@@ -8,6 +8,7 @@ import threading
 from collections import defaultdict
 
 from pyraftlib.rpc_server import RpcServer
+from pyraftlib.states.follower import Follower
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class Service:
         self.peers = peers
         self.rpc_server = RpcServer(peer_info=self.peer_info, peers=self.peers)
         self.cluster = self.rpc_server.cluster
+        self.state = None
         self.lock = threading.Lock()
         self.terminate_cv = threading.Condition(self.lock)
         self.terminated = False
@@ -47,6 +49,7 @@ class Service:
 
     def start(self):
         self.rpc_server.start()
+        self.state = Follower(name=self.peer_info['peer_id'], service=service)
 
     def run(self):
         self.start()
