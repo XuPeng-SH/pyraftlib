@@ -1,7 +1,6 @@
 import logging
 import threading
 
-# from pyraftlib.workers.thread_worker import ThreadWorker
 from pyraftlib.rpc_client import RpcClient
 from pyraftlib.raft_pb2 import (AppendEntriesResponse, RequestVoteResponse,
         AppendEntriesRequest, RequestVoteRequest)
@@ -34,10 +33,8 @@ class Cluster(object):
             self.service.on_peer_append_entries_response(response)
         elif response.__class__.__name__ == RequestVoteResponse.__name__:
             self.service.on_peer_vote_response(response)
-        # elif isinstance(response, RequestVoteResponse):
-        #     self.state.on_peer_vote_request_event(response)
 
-        # raise RuntimeError(f'Unkown response [{response.__class__.__name__}]')
+        raise RuntimeError(f'Unkown response [{response.__class__.__name__}]')
 
     def send_append_entries(self, request):
         for peer_id, client in self.active_peers.items():

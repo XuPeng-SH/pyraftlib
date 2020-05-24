@@ -48,3 +48,8 @@ class State:
         assert self.name is not None
         self.volatile_state = VolatileState(0, 0)
         self.persist_state = PersistState()
+
+    def __str__(self):
+        return f'[{self.Display}:{self.name}]'
+
+    __repr__ = __str__

@@ -11,6 +11,7 @@ from pyraftlib.states.follower import Follower
 logger = logging.getLogger(__name__)
 
 class Leader(State):
+    Display = 'Leader'
     def __init__(self, name=None, stale_state=None, service=None):
         super().__init__(name=name, stale_state=stale_state, service=service)
         self.timer = ThreadWorker(on_event=self.on_timer_event, on_timeout=self.on_timer_timerout,

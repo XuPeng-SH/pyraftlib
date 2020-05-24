@@ -45,7 +45,7 @@ class RpcServer:
 
     def start(self, *args, **kwargs):
         self.dump()
-        handler = RpcHandler(cluster=self.cluster)
+        handler = RpcHandler(cluster=self.cluster, service=self.service)
         add_RaftServiceServicer_to_server(handler, self.server_impl)
         self.server_impl.add_insecure_port(f'[::]:{self.peer_info["port"]}')
         logger.info(f'RpcServer is listening on port {self.peer_info["port"]}')
