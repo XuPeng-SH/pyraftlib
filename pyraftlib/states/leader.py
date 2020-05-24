@@ -9,8 +9,8 @@ from pyraftlib.events import TerminateEvent
 logger = logging.getLogger(__name__)
 
 class Leader(State):
-    def __init__(self, name=None, old_state=None, service=None):
-        super().__init__(name=name, old_state=old_state, service=service)
+    def __init__(self, name=None, stale_state=None, service=None):
+        super().__init__(name=name, stale_state=stale_state, service=service)
         self.timer = ThreadWorker(on_event=self.on_timer_event, on_timeout=self.on_timer_timerout,
                 get_timeout=self.get_timer_timeout)
         self.timer.start()

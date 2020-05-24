@@ -1,0 +1,4 @@
+version: 2
+cluster:
+    peer_id: 2
+    peers: 1@localhost:18888,2@localhost:18788,3@localhost:18988
