@@ -2,7 +2,7 @@ import logging
 import random
 from pyraftlib.states import State
 from pyraftlib.workers.thread_worker import ThreadWorker
-from pyraftlib.events import NoopEvent
+from pyraftlib.events import NoopEvent, TerminateEvent
 
 logger = logging.getLogger(__name__)
 
@@ -53,3 +53,11 @@ class Follower(State):
 
         logger.debug(f'{self.name} voting for {event.peer_id}. Active:{active_term} CanVote:{can_vote} Granted:{granted}')
         # response_event =
+
+    def shutdown(self):
+        self.timer.submit(TerminateEvent())
+        self.timer.join()
+        logger.info(f'Follower {self.name} timer is down')
+
+    def __del__(self):
+        self.shutdown()
