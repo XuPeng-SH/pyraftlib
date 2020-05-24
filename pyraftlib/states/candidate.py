@@ -2,7 +2,8 @@ import logging
 
 from pyraftlib.states.follower import Follower
 from pyraftlib.events import VoteRequestEvent
-from pyraftlib.raft_pb2 import RequestVoteRequest
+from pyraftlib.raft_pb2 import (RequestVoteRequest, RequestVoteResponse,
+        AppendEntriesRequest, AppendEntriesResponse)
 from pyraftlib.events import TerminateEvent
 from pyraftlib.states.leader import Leader
 
@@ -28,16 +29,19 @@ class Candidate(Follower):
         request.peer_id = self.name
         self.service.send_vote_requests(request)
 
-    def on_peer_append_entries_event(self, event):
-        active_term = event.term >= self.persist_state.current_term
+    def on_peer_append_entries(self, request):
+        active_term = request.term >= self.persist_state.current_term
+        response = AppendEntriesResponse()
+        response.peer_id = self.name
+        response.term = request.term
         if not active_term:
-            logger.info(f'Candidate {self.name} recieved AE from {event.peer_id} with stale term. Ignore')
-            return True, None
+            logger.info(f'Candidate {self.name} recieved AE from {request.leaderId} with stale term. Ignore')
+            response.success = False
+            return response
 
-        logger.info(f'Candidate {self.name} recieved AE from {event.peer_id}. Will convert to Follower')
+        logger.info(f'Candidate {self.name} recieved AE from {request.leaderId}. Will convert to Follower')
         self.service.convert_to(Follower)
-        self.service.on_peer_append_entries_event(event)
-        return True, None
+        return self.service.on_peer_append_entries(request)
 
     def on_peer_vote_response(self, response):
         self.votes_count += 1 if response.voteGranted else 0

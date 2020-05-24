@@ -91,6 +91,9 @@ class Service:
     def on_peer_vote_request(self, request):
         return self.state.on_peer_vote_request(request)
 
+    def on_peer_append_entries(self, request):
+        return self.state.on_peer_append_entries(request)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s | %(levelname)s | %(message)s (%(filename)s:%(lineno)d)')

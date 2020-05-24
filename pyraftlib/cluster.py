@@ -50,6 +50,9 @@ class Cluster(object):
     def on_peer_vote_request(self, request):
         return self.service.on_peer_vote_request(request)
 
+    def on_peer_append_entries(self, request):
+        return self.service.on_peer_append_entries(request)
+
     def shutdown(self):
         pass
 

@@ -51,16 +51,19 @@ class Leader(State):
         response.peer_id = self.name
         return response
 
-    def on_peer_append_entries_event(self, event):
-        active_term = event.term > self.persist_state.current_term
+    def on_peer_append_entries(self, request):
+        active_term = request.term > self.persist_state.current_term
+        response = AppendEntriesResponse()
+        response.peer_id = self.name
+        response.term = request.term
         if not active_term:
-            logger.info(f'Leader {self.name} received from {event.leaderId} with stale term. Ignore')
-            return True, None
+            logger.info(f'Leader {self.name} received from {request.leaderId} with stale term. Ignore')
+            response.success = False
+            return response
 
-        logger.info(f'Leader {self.name} received from {event.leaderId}. Will convert to Follower')
+        logger.info(f'Leader {self.name} received from {request.leaderId}. Will convert to Follower')
         self.service.convert_to(Follower)
-        self.on_peer_append_entries_event(event)
-        return True, None
+        return self.on_peer_append_entries(event)
 
     def shutdown(self):
         self.timer.submit(TerminateEvent())

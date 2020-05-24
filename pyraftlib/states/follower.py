@@ -34,17 +34,23 @@ class Follower(State):
         self.service.convert_to(Candidate)
         return False, reason
 
-    def on_peer_append_entries_event(self, event):
+    def on_peer_append_entries(self, request):
         current_term = self.persist_state.current_term
-        active_term = event.term >= current_term
-        if not active_term:
-            logger.info(f'{self.name} current_term {current_term} received {event.peer_id} with stale term {event.term}. Ignore')
-            return True, None
+        active_term = request.term >= current_term
 
-        self.persist_state.current_term = event.term
-        self.volatile_state.leader_id = event.peer_id
+        response = AppendEntriesResponse()
+        response.peer_id = self.name
+        response.term = request.term
+        if not active_term:
+            logger.info(f'{self.name} current_term {current_term} received {request.peer_id} with stale term {request.term}. Ignore')
+            response.success = False
+            return response
+
+        self.persist_state.current_term = request.term
+        self.volatile_state.leader_id = request.peer_id
         self.refresh_timer()
-        return True, None
+        response.success = True
+        return response
 
     def on_peer_vote_response(self, response):
         logger.error(f'>>> Should not be called!')

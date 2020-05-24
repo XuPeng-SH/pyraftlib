@@ -10,7 +10,8 @@ class RpcHandler(raft_pb2_grpc.RaftServiceServicer):
 
     def AppendEntries(self, request, context):
         logger.info(f'AppendEntries Term {request.term} PeerInfo {self.cluster.peer_info}')
-        response = raft_pb2.AppendEntriesResponse(term=1, success=True, peer_id=self.cluster.peer_info['peer_id'])
+        # response = raft_pb2.AppendEntriesResponse(term=1, success=True, peer_id=self.cluster.peer_info['peer_id'])
+        response = self.cluster.on_peer_append_entries(request)
         return response
 
     def RequestVote(self, request, context):
