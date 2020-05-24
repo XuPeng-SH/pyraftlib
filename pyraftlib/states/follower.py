@@ -24,7 +24,7 @@ class Follower(State):
         return random.randint(4,8) * random.randint(8,10) ** -1
 
     def on_timer_timerout(self):
-        reason = f'{self.name} FollowerTimeout. Converted to Candidate'
+        reason = f'Follower {self.name} FollowerTimeout. Converted to Candidate'
         logger.info(reason)
 
         return False, reason
@@ -57,7 +57,7 @@ class Follower(State):
     def shutdown(self):
         self.timer.submit(TerminateEvent())
         self.timer.join()
-        logger.info(f'Follower {self.name} timer is down')
 
     def __del__(self):
         self.shutdown()
+        logger.info(f'Follower {self.name} is down')

@@ -35,7 +35,7 @@ class Service:
         self.peer_info = peers.pop(peer_id)
         self.peer_info['peer_id'] = peer_id
         self.peers = peers
-        self.rpc_server = RpcServer(peer_info=self.peer_info, peers=self.peers)
+        self.rpc_server = RpcServer(peer_info=self.peer_info, peers=self.peers, service=self)
         self.cluster = self.rpc_server.cluster
         self.state = None
         self.lock = threading.Lock()
@@ -46,6 +46,10 @@ class Service:
         with open(yaml_path, 'r') as f:
             conf = yaml.load(f, Loader=yaml.FullLoader)
         return conf
+
+    def convert_to(self, state_type):
+        self.state.shutdown()
+        self.state = state_type(old_state=self.state)
 
     def start(self):
         self.rpc_server.start()
@@ -66,6 +70,14 @@ class Service:
             self.rpc_server.stop()
             self.terminated = True
             self.terminate_cv.notify_all()
+
+    def send_vote_requests(self, event):
+        self.cluster.send_vote_requests(event)
+
+    def on_peer_append_entries_response(self, response):
+        # TODO:
+        logger.info(f'Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
+        # self.state.on_peer_append_entries_response()
 
 
 if __name__ == '__main__':

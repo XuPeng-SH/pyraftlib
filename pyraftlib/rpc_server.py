@@ -15,10 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 class RpcServer:
-    def __init__(self, peer_info, peers, **kwargs):
+    def __init__(self, peer_info, peers, service, **kwargs):
+        self.service = service
         self.peers = peers
         self.peer_info = peer_info
-        self.cluster = Cluster(self.peer_info, self.peers)
+        self.cluster = Cluster(self.peer_info, self.peers, service)
 
         self.max_workers = kwargs.get('max_workers', 10)
 

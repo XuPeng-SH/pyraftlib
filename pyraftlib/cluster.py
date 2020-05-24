@@ -8,18 +8,19 @@ from pyraftlib.raft_pb2 import AppendEntriesResponse, RequestVoteResponse
 logger = logging.getLogger(__name__)
 
 class Cluster(object):
-    def __init__(self, peer_info, peers, state=None):
+    def __init__(self, peer_info, peers, service):
         self.lock = threading.Lock()
         self.peers = peers
         self.peer_info = peer_info
         self.active_peers = {}
-        self.state = state
+        self.service = service
 
     def process_future_callback(self, future):
         response = future.result()
         logger.info(f'Response [{response.__class__.__name__}] from {response.peer_id}')
-        # if isinstance(response, AppendEntriesResponse):
-        #     self.state.on_peer_append_entries_event(response)
+
+        if response.__class__.__name__ == AppendEntriesResponse.__name__:
+            self.service.on_peer_append_entries_response(response)
         # elif isinstance(response, RequestVoteResponse):
         #     self.state.on_peer_vote_request_event(response)
 
@@ -37,18 +38,16 @@ class Cluster(object):
                         done_cb=self.process_future_callback)
         return True, None
 
-    def on_peer_vote_request_event(self, event):
+    def send_append_entries(self, event):
         clients = {}
         with self.lock:
             for peer_id, client in self.active_peers.items():
                 clients[peer_id] = client
         for peer_id, client in clients.items():
-            client.RequestVote(event.request, sync=False)
-        return True, None
+            client.RequestVote(request, sync=False)
 
     def shutdown(self):
         pass
-        # self.response_processor.submit(TerminateEvent())
 
     def __del__(self):
         self.shutdown()
