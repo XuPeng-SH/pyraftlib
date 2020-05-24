@@ -8,6 +8,7 @@ from pyraftlib.events import TerminateEvent
 logger = logging.getLogger(__name__)
 
 class Candidate(Follower):
+    Display = 'Candidate'
     def __init__(self, name=None, stale_state=None, service=None):
         super().__init__(name=name, stale_state=stale_state, service=service)
         self.persist_state.current_term += 1
@@ -25,10 +26,6 @@ class Candidate(Follower):
         request.candidateId = self.name
         request.peer_id = self.name
         self.service.send_vote_requests(request)
-
-    def on_timer_timerout(self):
-        logger.info(f'Candidate {self.name} start election from timeout')
-        return True, None
 
     def on_peer_append_entries_event(self, event):
         active_term = event.term >= self.persist_state.current_term
@@ -48,10 +45,3 @@ class Candidate(Follower):
             logger.info(f'Candidate {self.name} win the election! Converted to Leader')
             self.service.convert_to(Leader)
         return True, None
-
-    def shutdown(self):
-        self.timer.submit(TerminateEvent())
-
-    def __del__(self):
-        self.shutdown()
-        logger.info(f'Candidate {self.name} is down')

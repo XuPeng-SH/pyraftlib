@@ -7,6 +7,7 @@ from pyraftlib.events import NoopEvent, TerminateEvent
 logger = logging.getLogger(__name__)
 
 class Follower(State):
+    Display = 'Follower'
     def __init__(self, name=None, stale_state=None, service=None):
         super().__init__(name=name, stale_state=stale_state, service=service)
         self.persist_state.voted_for = None
@@ -25,7 +26,7 @@ class Follower(State):
 
     def on_timer_timerout(self):
         from pyraftlib.states.candidate import Candidate
-        reason = f'Follower {self.name} FollowerTimeout. Converted to Candidate'
+        reason = f'{self.Display} {self.name} Timeout. Converted to Candidate'
         logger.info(reason)
         self.service.convert_to(Candidate)
         return False, reason
@@ -57,8 +58,7 @@ class Follower(State):
 
     def shutdown(self):
         self.timer.submit(TerminateEvent())
-        # self.timer.join()
 
     def __del__(self):
         self.shutdown()
-        logger.info(f'Follower {self.name} is down')
+        logger.info(f'{self.Display} {self.name} is down')
