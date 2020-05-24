@@ -3,12 +3,13 @@ import logging
 from pyraftlib.states.follower import Follower
 from pyraftlib.events import VoteRequestEvent
 from pyraftlib.raft_pb2 import RequestVoteRequest
+from pyraftlib.events import TerminateEvent
 
 logger = logging.getLogger(__name__)
 
 class Candidate(Follower):
-    def __init__(self, name=None, old_state=None, service=None):
-        super().__init__(name=name, old_state=old_state, service=service)
+    def __init__(self, name=None, stale_state=None, service=None):
+        super().__init__(name=name, stale_state=stale_state, service=service)
         self.persist_state.current_term += 1
         self.votes_count = 0
         logger.info(f'Candidate {self.name} Start New Election. Term: {self.persist_state.current_term}')
@@ -49,7 +50,8 @@ class Candidate(Follower):
         return True, None
 
     def shutdown(self):
-        logger.info(f'Candidate {self.name} is down')
+        self.timer.submit(TerminateEvent())
 
     def __del__(self):
         self.shutdown()
+        logger.info(f'Candidate {self.name} is down')

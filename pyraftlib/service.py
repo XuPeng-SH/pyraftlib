@@ -49,7 +49,8 @@ class Service:
 
     def convert_to(self, state_type):
         self.state.shutdown()
-        self.state = state_type(old_state=self.state)
+        logger.info(f'>>> State {type(self.state).__name__} Converted To {state_type.__name__} ')
+        self.state = state_type(stale_state=self.state)
 
     def start(self):
         self.rpc_server.start()
@@ -70,6 +71,8 @@ class Service:
             self.rpc_server.stop()
             self.terminated = True
             self.terminate_cv.notify_all()
+        if self.state:
+            self.state.shutdown()
 
     def send_vote_requests(self, event):
         self.cluster.send_vote_requests(event)

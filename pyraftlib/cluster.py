@@ -38,13 +38,22 @@ class Cluster(object):
                         done_cb=self.process_future_callback)
         return True, None
 
-    def send_append_entries(self, event):
+    def send_append_entries(self, request):
+        clients = {}
+        with self.lock:
+            for peer_id, client in self.active_peers.items():
+                clients[peer_id] = client
+        for peer_id, client in clients.items():
+            client.AppendEntries(request, sync=False)
+
+    def send_vote_requests(self, request):
         clients = {}
         with self.lock:
             for peer_id, client in self.active_peers.items():
                 clients[peer_id] = client
         for peer_id, client in clients.items():
             client.RequestVote(request, sync=False)
+
 
     def shutdown(self):
         pass

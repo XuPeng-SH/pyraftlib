@@ -24,9 +24,10 @@ class Follower(State):
         return random.randint(4,8) * random.randint(8,10) ** -1
 
     def on_timer_timerout(self):
+        from pyraftlib.states.candidate import Candidate
         reason = f'Follower {self.name} FollowerTimeout. Converted to Candidate'
         logger.info(reason)
-
+        self.service.convert_to(Candidate)
         return False, reason
 
     def on_peer_append_entries_event(self, event):
@@ -56,7 +57,7 @@ class Follower(State):
 
     def shutdown(self):
         self.timer.submit(TerminateEvent())
-        self.timer.join()
+        # self.timer.join()
 
     def __del__(self):
         self.shutdown()
