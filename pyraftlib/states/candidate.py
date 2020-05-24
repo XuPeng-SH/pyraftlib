@@ -38,10 +38,10 @@ class Candidate(Follower):
         self.service.on_peer_append_entries_event(event)
         return True, None
 
-    def on_peer_vote_response_event(self, event):
-        self.votes_count += 1 if event.granted else 0
-        logger.info(f'Candidate {self.name} vote count: {self.votes_count}')
+    def on_peer_vote_response(self, response):
+        self.votes_count += 1 if response.voteGranted else 0
+        logger.info(f'{self.Display} {self.name} has vote count: {self.votes_count}')
         if self.votes_count > (len(self.service.peers) + 1) / 2:
-            logger.info(f'Candidate {self.name} win the election! Converted to Leader')
+            logger.info(f'{self.Display} {self.name} win the election! Converted to Leader')
             self.service.convert_to(Leader)
         return True, None

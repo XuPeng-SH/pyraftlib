@@ -34,7 +34,7 @@ class Leader(State):
             time.sleep(event.delay)
         return True, None
 
-    def on_peer_vote_response_event(self, event):
+    def on_peer_vote_response(self, event):
         return True, None
 
     def on_peer_vote_request_event(self, event):

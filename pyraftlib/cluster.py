@@ -32,6 +32,8 @@ class Cluster(object):
 
         if response.__class__.__name__ == AppendEntriesResponse.__name__:
             self.service.on_peer_append_entries_response(response)
+        elif response.__class__.__name__ == RequestVoteResponse.__name__:
+            self.service.on_peer_vote_response(response)
         # elif isinstance(response, RequestVoteResponse):
         #     self.state.on_peer_vote_request_event(response)
 

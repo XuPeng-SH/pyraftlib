@@ -82,6 +82,9 @@ class Service:
         logger.info(f'Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
         # self.state.on_peer_append_entries_response()
 
+    def on_peer_vote_response(self, response):
+        self.state.on_peer_vote_response(response)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s | %(levelname)s | %(message)s (%(filename)s:%(lineno)d)')
@@ -92,13 +95,13 @@ if __name__ == '__main__':
         from pyraftlib.rpc_client import RpcClient
         from pyraftlib import raft_pb2_grpc, raft_pb2
         client_handler = RpcClient(done_cb=s.cluster.process_future_callback)
-        request = raft_pb2.AppendEntriesRequest()
-        request.term = 111
-        client_handler.AppendEntries(request, sync=False)
+        # request = raft_pb2.AppendEntriesRequest()
+        # request.term = 111
+        # client_handler.AppendEntries(request, sync=False)
 
-        # request = raft_pb2.RequestVoteRequest()
-        # request.term = 222
-        # client_handler.RequestVote(request, sync=False)
+        request = raft_pb2.RequestVoteRequest()
+        request.term = 222
+        client_handler.RequestVote(request, sync=False)
 
         time.sleep(0.8)
         logger.info(f'Client is stopping server')

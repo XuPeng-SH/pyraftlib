@@ -43,6 +43,10 @@ class Follower(State):
         self.refresh_timer()
         return True, None
 
+    def on_peer_vote_response(self, response):
+        logger.error(f'>>> Should not be called!')
+        return True, None
+
     def on_peer_vote_request_event(self, event):
         current_term = self.persist_state.current_term
         active_term = event.term >= current_term
@@ -61,4 +65,4 @@ class Follower(State):
 
     def __del__(self):
         self.shutdown()
-        logger.info(f'{self.Display} {self.name} is down')
+        # logger.info(f'{self.Display} {self.name} is down')
