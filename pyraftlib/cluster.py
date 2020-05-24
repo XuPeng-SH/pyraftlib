@@ -15,6 +15,9 @@ class Cluster(object):
         self.peer_info = peer_info
         self.active_peers = {}
         self.service = service
+        for peer_id, peer in self.peers.items():
+            self.active_peers[peer_id] = RpcClient(host=peer['host'], port=peer['port'],
+                    done_cb=self.process_future_callback)
 
     def on_process_response_exception(self, client, exc):
         logger.error(f'Client [{client.host}:{client.port}] Encounter Exception: {type(exc)}')
@@ -53,13 +56,17 @@ class Cluster(object):
                 clients[peer_id] = client
         for peer_id, client in clients.items():
             client.AppendEntries(request, sync=False)
+        for peer_id, client in self.active_peers.items():
+            client.AppendEntries(request, sync=False)
 
     def send_vote_requests(self, request):
-        clients = {}
-        with self.lock:
-            for peer_id, client in self.active_peers.items():
-                clients[peer_id] = client
-        for peer_id, client in clients.items():
+        # clients = {}
+        # with self.lock:
+        #     for peer_id, client in self.active_peers.items():
+        #         clients[peer_id] = client
+        # for peer_id, client in clients.items():
+        #     client.RequestVote(request, sync=False)
+        for peer_id, client in self.active_peers.items():
             client.RequestVote(request, sync=False)
 
     def shutdown(self):

@@ -14,14 +14,15 @@ class RpcClient:
         self.channel = grpc.insecure_channel(f'{host}:{port}')
         self.stub = raft_pb2_grpc.RaftServiceStub(self.channel)
         self.done_cb = done_cb
+        self.address = f'{self.host}:{self.port}'
 
     def AppendEntries(self, request, sync=True, timeout=None, **kwargs):
-        logger.info(f'Send AppendEntries Request: Term {request.term}')
+        logger.info(f'Send [{self.address}] AppendEntries Request: Term {request.term}')
         future = self.stub.AppendEntries.future(request, timeout=timeout)
         if sync:
             try:
                 response = future.result()
-                logger.info(f'Get AppendEntries Response: Term {response.term}')
+                logger.info(f'Get [{self.address}] AppendEntries Response: Term {response.term}')
                 return response
             except Exception as exc:
                 logger.error(f'{type(exc).__name__} {str(exc)}')
@@ -32,11 +33,11 @@ class RpcClient:
         return future
 
     def RequestVote(self, request, sync=True, timeout=None, **kwargs):
-        logger.info(f'Send RequestVote Request: Term {request.term}')
+        logger.info(f'Send [{self.address}] RequestVote Request: Term {request.term}')
         future = self.stub.RequestVote.future(request, timeout=timeout)
         if sync:
             response = future.result()
-            logger.info(f'Get RequestVote Response: Term {response.term}')
+            logger.info(f'Get [{self.address}] RequestVote Response: Term {response.term}')
             return response
         if self.done_cb:
             done_cb = partial(self.done_cb, self)
