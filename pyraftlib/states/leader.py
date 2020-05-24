@@ -57,8 +57,8 @@ class Leader(State):
 
     def shutdown(self):
         self.timer.submit(TerminateEvent())
-        self.timer.join()
+        # self.timer.join()
 
     def __del__(self):
         self.shutdown()
-        logger.info(f'Leader {self.name} timer is down')
+        logger.info(f'Leader {self.name} is down')

@@ -4,6 +4,7 @@ from pyraftlib.states.follower import Follower
 from pyraftlib.events import VoteRequestEvent
 from pyraftlib.raft_pb2 import RequestVoteRequest
 from pyraftlib.events import TerminateEvent
+from pyraftlib.states.leader import Leader
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +13,7 @@ class Candidate(Follower):
     def __init__(self, name=None, stale_state=None, service=None):
         super().__init__(name=name, stale_state=stale_state, service=service)
         self.persist_state.current_term += 1
-        self.votes_count = 0
+        self.votes_count = 1
         logger.info(f'Candidate {self.name} Start New Election. Term: {self.persist_state.current_term}')
         self.send_vote_requests()
 

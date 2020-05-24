@@ -54,7 +54,7 @@ class Service:
 
     def start(self):
         self.rpc_server.start()
-        self.state = Follower(name=self.peer_info['peer_id'], service=service)
+        self.state = Follower(name=self.peer_info['peer_id'], service=self)
 
     def run(self):
         self.start()
@@ -84,6 +84,9 @@ class Service:
 
     def on_peer_vote_response(self, response):
         self.state.on_peer_vote_response(response)
+
+    def on_peer_vote_request(self, request):
+        return self.state.on_peer_vote_request(request)
 
 
 if __name__ == '__main__':

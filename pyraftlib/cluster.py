@@ -39,18 +39,6 @@ class Cluster(object):
 
         # raise RuntimeError(f'Unkown response [{response.__class__.__name__}]')
 
-    def on_peer_connected_event(self, event):
-        logger.info(f'Cluster PeerConnectedEvent: {event.peer_info}')
-
-        with self.lock:
-            if event.peer_id not in self.active_peers:
-                peer_info = self.peers[event.peer_id]
-                host = peer_info.split(':')[0]
-                port = peer_info.split(':')[1]
-                self.active_peers[event.peer_id] = RpcClient(host=host, port=port,
-                        done_cb=self.process_future_callback)
-        return True, None
-
     def send_append_entries(self, request):
         clients = {}
         with self.lock:
@@ -62,14 +50,11 @@ class Cluster(object):
             client.AppendEntries(request, sync=False)
 
     def send_vote_requests(self, request):
-        # clients = {}
-        # with self.lock:
-        #     for peer_id, client in self.active_peers.items():
-        #         clients[peer_id] = client
-        # for peer_id, client in clients.items():
-        #     client.RequestVote(request, sync=False)
         for peer_id, client in self.active_peers.items():
             client.RequestVote(request, sync=False)
+
+    def on_peer_vote_request(self, request):
+        return self.service.on_peer_vote_request(request)
 
     def shutdown(self):
         pass

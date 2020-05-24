@@ -3,8 +3,11 @@ import random
 from pyraftlib.states import State
 from pyraftlib.workers.thread_worker import ThreadWorker
 from pyraftlib.events import NoopEvent, TerminateEvent
+from pyraftlib.raft_pb2 import (RequestVoteResponse, AppendEntriesResponse,
+        RequestVoteRequest, AppendEntriesRequest)
 
 logger = logging.getLogger(__name__)
+
 
 class Follower(State):
     Display = 'Follower'
@@ -47,18 +50,22 @@ class Follower(State):
         logger.error(f'>>> Should not be called!')
         return True, None
 
-    def on_peer_vote_request_event(self, event):
+    def on_peer_vote_request(self, request):
         current_term = self.persist_state.current_term
-        active_term = event.term >= current_term
-        can_vote = self.persist_state.voted_for in (event.peer_id, None) or event.term > current_term
+        active_term = request.term >= current_term
+        can_vote = self.persist_state.voted_for in (request.peer_id, None) or request.term > current_term
         granted = active_term and can_vote
 
         if granted:
-            self.persist_state.voted_for = event.peer_id
+            self.persist_state.voted_for = request.peer_id
             self.refresh_timer()
 
-        logger.debug(f'{self.name} voting for {event.peer_id}. Active:{active_term} CanVote:{can_vote} Granted:{granted}')
-        # response_event =
+        logger.info(f'{self.Display} {self.name} voting for {request.candidateId}. Active:{active_term} CanVote:{can_vote} Granted:{granted}')
+        response = RequestVoteResponse()
+        response.term = current_term
+        response.voteGranted = granted
+        response.peer_id = self.name
+        return response
 
     def shutdown(self):
         self.timer.submit(TerminateEvent())
