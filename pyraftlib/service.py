@@ -74,6 +74,9 @@ class Service:
         if self.state:
             self.state.shutdown()
 
+    def send_append_entries(self, request):
+        self.cluster.send_append_entries(request)
+
     def send_vote_requests(self, event):
         self.cluster.send_vote_requests(event)
 

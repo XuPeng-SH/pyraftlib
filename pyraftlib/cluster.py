@@ -40,12 +40,6 @@ class Cluster(object):
         # raise RuntimeError(f'Unkown response [{response.__class__.__name__}]')
 
     def send_append_entries(self, request):
-        clients = {}
-        with self.lock:
-            for peer_id, client in self.active_peers.items():
-                clients[peer_id] = client
-        for peer_id, client in clients.items():
-            client.AppendEntries(request, sync=False)
         for peer_id, client in self.active_peers.items():
             client.AppendEntries(request, sync=False)
 

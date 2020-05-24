@@ -2,9 +2,11 @@ import logging
 import time
 
 from pyraftlib.states import State
-from pyraftlib.raft_pb2 import RequestVoteRequest, AppendEntriesRequest
+from pyraftlib.raft_pb2 import (RequestVoteRequest, AppendEntriesRequest,
+        RequestVoteResponse, AppendEntriesResponse)
 from pyraftlib.workers.thread_worker import ThreadWorker
-from pyraftlib.events import TerminateEvent
+from pyraftlib.events import TerminateEvent, DelayEvent
+from pyraftlib.states.follower import Follower
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +39,17 @@ class Leader(State):
     def on_peer_vote_response(self, event):
         return True, None
 
-    def on_peer_vote_request_event(self, event):
-        active_term = event.term > self.persist_state.current_term
+    def on_peer_vote_request(self, request):
+        active_term = request.term > self.persist_state.current_term
         if active_term:
             self.service.convert_to(Follower)
-            self.service.on_peer_vote_request_event(event)
-        return True, None
+            return self.service.on_peer_vote_request(request)
+
+        response = RequestVoteResponse()
+        response.term = self.persist_state.current_term
+        response.voteGranted = False
+        response.peer_id = self.name
+        return response
 
     def on_peer_append_entries_event(self, event):
         active_term = event.term > self.persist_state.current_term
