@@ -1,5 +1,6 @@
 import logging
 import grpc
+from functools import partial
 
 from pyraftlib import raft_pb2_grpc, raft_pb2
 
@@ -18,10 +19,16 @@ class RpcClient:
         logger.info(f'Send AppendEntries Request: Term {request.term}')
         future = self.stub.AppendEntries.future(request, timeout=timeout)
         if sync:
-            response = future.result()
-            logger.info(f'Get AppendEntries Response: Term {response.term}')
-            return response
-        self.done_cb and future.add_done_callback(self.done_cb)
+            try:
+                response = future.result()
+                logger.info(f'Get AppendEntries Response: Term {response.term}')
+                return response
+            except Exception as exc:
+                logger.error(f'{type(exc).__name__} {str(exc)}')
+                return None
+        if self.done_cb:
+            done_cb = partial(self.done_cb, self)
+            future.add_done_callback(done_cb)
         return future
 
     def RequestVote(self, request, sync=True, timeout=None, **kwargs):
@@ -31,5 +38,7 @@ class RpcClient:
             response = future.result()
             logger.info(f'Get RequestVote Response: Term {response.term}')
             return response
-        self.done_cb and future.add_done_callback(self.done_cb)
+        if self.done_cb:
+            done_cb = partial(self.done_cb, self)
+            future.add_done_callback(done_cb)
         return future

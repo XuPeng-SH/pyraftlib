@@ -3,7 +3,8 @@ import threading
 
 # from pyraftlib.workers.thread_worker import ThreadWorker
 from pyraftlib.rpc_client import RpcClient
-from pyraftlib.raft_pb2 import AppendEntriesResponse, RequestVoteResponse
+from pyraftlib.raft_pb2 import (AppendEntriesResponse, RequestVoteResponse,
+        AppendEntriesRequest, RequestVoteRequest)
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,15 @@ class Cluster(object):
         self.active_peers = {}
         self.service = service
 
-    def process_future_callback(self, future):
-        response = future.result()
+    def on_process_response_exception(self, client, exc):
+        logger.error(f'Client [{client.host}:{client.port}] Encounter Exception: {type(exc)}')
+
+    def process_future_callback(self, client, future):
+        try:
+            response = future.result()
+        except Exception as exc:
+            self.on_process_response_exception(client, exc)
+            return
         logger.info(f'Response [{response.__class__.__name__}] from {response.peer_id}')
 
         if response.__class__.__name__ == AppendEntriesResponse.__name__:
@@ -53,7 +61,6 @@ class Cluster(object):
                 clients[peer_id] = client
         for peer_id, client in clients.items():
             client.RequestVote(request, sync=False)
-
 
     def shutdown(self):
         pass

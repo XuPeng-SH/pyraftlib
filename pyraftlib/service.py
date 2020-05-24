@@ -88,7 +88,7 @@ if __name__ == '__main__':
     service = Service('../examples/example.yml')
     def mock_client(s):
         import time
-        time.sleep(1)
+        time.sleep(0.2)
         from pyraftlib.rpc_client import RpcClient
         from pyraftlib import raft_pb2_grpc, raft_pb2
         client_handler = RpcClient(done_cb=s.cluster.process_future_callback)
@@ -96,11 +96,11 @@ if __name__ == '__main__':
         request.term = 111
         client_handler.AppendEntries(request, sync=False)
 
-        request = raft_pb2.RequestVoteRequest()
-        request.term = 222
-        client_handler.RequestVote(request, sync=False)
+        # request = raft_pb2.RequestVoteRequest()
+        # request.term = 222
+        # client_handler.RequestVote(request, sync=False)
 
-        time.sleep(1)
+        time.sleep(0.2)
         logger.info(f'Client is stopping server')
         s.stop()
 
