@@ -27,14 +27,14 @@ class Cluster(object):
         except Exception as exc:
             self.on_process_response_exception(client, exc)
             return
-        logger.info(f'Response [{response.__class__.__name__}] from {response.peer_id}')
+        # logger.info(f'Response [{response.__class__.__name__}] from {response.peer_id}')
 
-        if response.__class__.__name__ == AppendEntriesResponse.__name__:
-            self.service.on_peer_append_entries_response(response)
-        elif response.__class__.__name__ == RequestVoteResponse.__name__:
-            self.service.on_peer_vote_response(response)
+        if hasattr(response, 'success'):
+            return self.service.on_peer_append_entries_response(response)
+        elif hasattr(response, 'voteGranted'):
+            return self.service.on_peer_vote_response(response)
 
-        raise RuntimeError(f'Unkown response [{response.__class__.__name__}]')
+        raise RuntimeError(f'Unkown response [{response.__class__}]')
 
     def send_append_entries(self, request):
         for peer_id, client in self.active_peers.items():

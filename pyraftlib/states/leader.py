@@ -19,7 +19,7 @@ class Leader(State):
         self.timer.start()
 
     def get_timer_timeout(self):
-        return 2* 12 ** -1
+        return 3* 12 ** -1
 
     def send_append_entries(self):
         request = AppendEntriesRequest()
@@ -58,11 +58,11 @@ class Leader(State):
         response.peer_id = self.name
         response.term = request.term
         if not active_term:
-            logger.info(f'Leader {self.name} received from {request.leaderId} with stale term. Ignore')
+            logger.debug(f'{self.Display} {self.name} received from {request.leaderId} with stale term. Ignore')
             response.success = False
             return response
 
-        logger.info(f'Leader {self.name} received from {request.leaderId}. Will convert to Follower')
+        logger.debug(f'{self.Display} {self.name} received from {request.leaderId}. Will convert to Follower')
         self.service.convert_to(Follower)
         return self.on_peer_append_entries(event)
 
@@ -72,4 +72,4 @@ class Leader(State):
 
     def __del__(self):
         self.shutdown()
-        logger.info(f'Leader {self.name} is down')
+        logger.info(f'{self.Display} {self.name} is down')
