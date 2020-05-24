@@ -10,6 +10,7 @@ from concurrent import futures
 from pyraftlib.raft_pb2_grpc import add_RaftServiceServicer_to_server
 from pyraftlib import raft_pb2_grpc, raft_pb2
 from pyraftlib.rpc_handler import RpcHandler
+from pyraftlib.cluster import Cluster
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ class RpcServer:
         self.peer_id = peer_id
         self.host = self_peer.split(':')[0]
         self.port = self_peer.split(':')[1]
+        self.cluster = Cluster(self.peer_id, self.peers)
 
     def init_app(self, *args, **kwargs):
         self.max_workers = kwargs.get('max_workers', 10)
@@ -52,7 +54,7 @@ class RpcServer:
 
     def start(self, *args, **kwargs):
         self.dump()
-        handler = RpcHandler()
+        handler = RpcHandler(cluster=self.cluster)
         add_RaftServiceServicer_to_server(handler, self.server_impl)
         self.server_impl.add_insecure_port(f'[::]:{self.port}')
         logger.info(f'RpcServer is listening on port {self.port}')
@@ -78,24 +80,18 @@ if __name__ == '__main__':
     import time
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s | %(levelname)s | %(message)s (%(filename)s:%(lineno)d)')
 
-    # from raft_service.states.follower import Follower
-
-    # follower = Follower(1)
-    # time.sleep(0.2)
-    # sys.exit(0)
-
     def mock_client(s):
         import time
         time.sleep(1)
         from pyraftlib.rpc_client import RpcClient
-        client_handler = RpcClient()
+        client_handler = RpcClient(done_cb=s.cluster.process_future_callback)
         request = raft_pb2.AppendEntriesRequest()
         request.term = 111
-        client_handler.AppendEntries(request)
+        client_handler.AppendEntries(request, sync=False)
 
         request = raft_pb2.RequestVoteRequest()
         request.term = 222
-        client_handler.RequestVote(request)
+        client_handler.RequestVote(request, sync=False)
 
         time.sleep(1)
         logger.info(f'Client is stopping server')
@@ -104,7 +100,7 @@ if __name__ == '__main__':
     server = RpcServer(1, {
         1: 'localhost:18888',
         2: 'localhost:18898',
-        3: 'localhost:18808',
+        3: 'localhost:18808'
     })
     server.init_app()
 
