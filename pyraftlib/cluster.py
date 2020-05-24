@@ -8,10 +8,10 @@ from pyraftlib.raft_pb2 import AppendEntriesResponse, RequestVoteResponse
 logger = logging.getLogger(__name__)
 
 class Cluster(object):
-    def __init__(self, peer_id, peers, state=None):
+    def __init__(self, peer_info, peers, state=None):
         self.lock = threading.Lock()
         self.peers = peers
-        self.peer_id = peer_id
+        self.peer_info = peer_info
         self.active_peers = {}
         self.state = state
 
@@ -26,7 +26,7 @@ class Cluster(object):
         # raise RuntimeError(f'Unkown response [{response.__class__.__name__}]')
 
     def on_peer_connected_event(self, event):
-        logger.info(f'Cluster PeerConnectedEvent: {event.peer_id}')
+        logger.info(f'Cluster PeerConnectedEvent: {event.peer_info}')
 
         with self.lock:
             if event.peer_id not in self.active_peers:
