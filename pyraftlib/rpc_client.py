@@ -15,9 +15,10 @@ class RpcClient:
         self.stub = raft_pb2_grpc.RaftServiceStub(self.channel)
         self.done_cb = done_cb
         self.address = f'{self.host}:{self.port}'
+        self.service = kwargs.get('service', None)
 
     def AppendEntries(self, request, sync=True, timeout=None, **kwargs):
-        logger.info(f'Send [{self.address}] AppendEntries Request: Term {request.term}')
+        logger.info(f'{self.service.state} Send [{self.address}] AppendEntries Request: Term {request.term}')
         future = self.stub.AppendEntries.future(request, timeout=timeout)
         if sync:
             try:
@@ -33,7 +34,7 @@ class RpcClient:
         return future
 
     def RequestVote(self, request, sync=True, timeout=None, **kwargs):
-        logger.info(f'Send [{self.address}] RequestVote Request: Term {request.term}')
+        logger.info(f'{self.service.state} Send [{self.address}] RequestVote Request: Term {request.term}')
         future = self.stub.RequestVote.future(request, timeout=timeout)
         if sync:
             response = future.result()

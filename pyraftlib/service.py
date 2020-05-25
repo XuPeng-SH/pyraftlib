@@ -82,7 +82,7 @@ class Service:
 
     def on_peer_append_entries_response(self, response):
         # TODO:
-        logger.info(f'Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
+        logger.info(f'{self.state} Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
         # self.state.on_peer_append_entries_response()
 
     def on_peer_vote_response(self, response):

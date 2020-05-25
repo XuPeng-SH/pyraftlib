@@ -16,10 +16,11 @@ class Cluster(object):
         self.service = service
         for peer_id, peer in self.peers.items():
             self.active_peers[peer_id] = RpcClient(host=peer['host'], port=peer['port'],
-                    done_cb=self.process_future_callback)
+                    done_cb=self.process_future_callback, service=self.service)
 
     def on_process_response_exception(self, client, exc):
-        logger.error(f'Client [{client.host}:{client.port}] Encounter Exception: {type(exc)}')
+        # logger.error(f'Client [{client.host}:{client.port}] Encounter Exception: {type(exc)}')
+        pass
 
     def process_future_callback(self, client, future):
         try:
