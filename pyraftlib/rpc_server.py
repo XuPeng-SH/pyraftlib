@@ -19,7 +19,24 @@ class RpcServer:
         self.service = service
         self.peers = peers
         self.peer_info = peer_info
-        self.cluster = Cluster(self.peer_info, self.peers, service)
+        server_cacert = kwargs.get('server_cacert', None)
+        server_private_key = kwargs.get('server_private_key', None)
+        client_cacert = kwargs.get('client_cacert', None)
+
+        self.cluster = Cluster(self.peer_info, self.peers, service, client_cacert=client_cacert)
+
+        self.add_port_args = [f'[::]:{self.peer_info["port"]}']
+
+        self.server_credentials = None
+
+        if server_cacert and server_private_key:
+            with open(server_cacert, 'rb') as f:
+                cacert = f.read()
+            with open(server_private_key, 'rb') as f:
+                private_key = f.read()
+
+            self.server_credentials = grpc.ssl_server_credentials(((private_key, cacert,),))
+            self.add_port_args.append(self.server_credentials)
 
         self.max_workers = kwargs.get('max_workers', 10)
 
@@ -28,6 +45,9 @@ class RpcServer:
             options=[(cygrpc.ChannelArgKey.max_send_message_length, -1),
                      (cygrpc.ChannelArgKey.max_receive_message_length, -1)]
         )
+
+        self.add_port_method = self.server_impl.add_secure_port if self.server_credentials \
+                else self.server_impl.add_insecure_port
 
     def dump(self):
         header = f'---------------------Raft Service Info Start------------------'
@@ -47,7 +67,7 @@ class RpcServer:
         self.dump()
         handler = RpcHandler(cluster=self.cluster, service=self.service)
         add_RaftServiceServicer_to_server(handler, self.server_impl)
-        self.server_impl.add_insecure_port(f'[::]:{self.peer_info["port"]}')
+        self.add_port_method(*self.add_port_args)
         logger.info(f'RpcServer is listening on port {self.peer_info["port"]}')
         self.server_impl.start()
 

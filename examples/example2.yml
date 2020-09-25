@@ -2,3 +2,8 @@ version: 2
 cluster:
     peer_id: 2
     peers: 1@localhost:18888,2@localhost:18788,3@localhost:18988
+
+security:
+    server_cacert: ./demo_keys/cacert.pem
+    server_private_key: ./demo_keys/privkey.pem
+    client_cacert: ./demo_keys/cacert.pem

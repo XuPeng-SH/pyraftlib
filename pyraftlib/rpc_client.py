@@ -11,7 +11,21 @@ class RpcClient:
     def __init__(self, host='localhost', port=18888, done_cb=None, **kwargs):
         self.host = host
         self.port = port
-        self.channel = grpc.insecure_channel(f'{host}:{port}')
+        self.cacert_path = kwargs.get('client_cacert', None)
+
+        channel_config = []
+        channel_config.append(f'{host}:{port}')
+
+        channel_method = grpc.insecure_channel
+
+        if self.cacert_path:
+            with open(self.cacert_path, 'rb') as f:
+                cacert = f.read()
+            credentials = grpc.ssl_channel_credentials(root_certificates=cacert)
+            channel_config.append(credentials)
+            channel_method = grpc.secure_channel
+
+        self.channel = channel_method(*channel_config)
         self.stub = raft_pb2_grpc.RaftServiceStub(self.channel)
         self.done_cb = done_cb
         self.address = f'{self.host}:{self.port}'

@@ -8,7 +8,7 @@ from pyraftlib.raft_pb2 import (AppendEntriesResponse, RequestVoteResponse,
 logger = logging.getLogger(__name__)
 
 class Cluster(object):
-    def __init__(self, peer_info, peers, service):
+    def __init__(self, peer_info, peers, service, **kwargs):
         self.lock = threading.Lock()
         self.peers = peers
         self.peer_info = peer_info
@@ -16,7 +16,7 @@ class Cluster(object):
         self.service = service
         for peer_id, peer in self.peers.items():
             self.active_peers[peer_id] = RpcClient(host=peer['host'], port=peer['port'],
-                    done_cb=self.process_future_callback, service=self.service)
+                    done_cb=self.process_future_callback, service=self.service, **kwargs)
 
     def on_process_response_exception(self, client, exc):
         # logger.error(f'Client [{client.host}:{client.port}] Encounter Exception: {type(exc)}')

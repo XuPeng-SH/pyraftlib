@@ -35,7 +35,8 @@ class Service:
         self.peer_info = peers.pop(peer_id)
         self.peer_info['peer_id'] = peer_id
         self.peers = peers
-        self.rpc_server = RpcServer(peer_info=self.peer_info, peers=self.peers, service=self)
+        secure_config = self.conf.get('security', {})
+        self.rpc_server = RpcServer(peer_info=self.peer_info, peers=self.peers, service=self, **secure_config)
         self.cluster = self.rpc_server.cluster
         self.state = None
         self.lock = threading.Lock()
