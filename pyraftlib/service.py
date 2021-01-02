@@ -82,9 +82,7 @@ class Service:
         self.cluster.send_vote_requests(event)
 
     def on_peer_append_entries_response(self, response):
-        # TODO:
-        logger.info(f'{self.state} Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
-        # self.state.on_peer_append_entries_response()
+        self.state.on_peer_append_entries_response(response)
 
     def on_peer_vote_response(self, response):
         self.state.on_peer_vote_response(response)

@@ -49,6 +49,13 @@ class State:
         self.volatile_state = VolatileState(0, 0)
         self.persist_state = PersistState()
 
+    def on_peer_append_entries_response(self, response):
+        current_term = self.persist_state.current_term
+        if response.request_term != current_term:
+            logger.warning(f'Received AE Resp of term {response.request_term} while current_term is {current_term}. Skip it')
+            return current_term, False
+        return current_term, True
+
     def __str__(self):
         return f'[{self.Display}:{self.name}]'
 

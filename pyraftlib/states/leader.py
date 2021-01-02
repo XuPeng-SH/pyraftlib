@@ -66,6 +66,22 @@ class Leader(State):
         self.service.convert_to(Follower)
         return self.on_peer_append_entries(event)
 
+    def on_peer_append_entries_response(self, response):
+        current_term, to_skip = super().on_peer_append_entries_response(response)
+        if to_skip:
+            return current_term, False
+
+        if current_term < response.term:
+            self.service.convert_to(Follower)
+            self.persist_state.current_term = response.term
+            self.persist_state.voted_for = None
+            self.volatile_state.leader_id = None
+
+        # TODO:
+        logger.info(f'{self.state} Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
+
+        return response.term, True
+
     def shutdown(self):
         self.timer.submit(TerminateEvent())
         # self.timer.join()
