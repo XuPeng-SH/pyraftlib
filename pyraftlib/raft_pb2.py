@@ -18,7 +18,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='raft',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\nraft.proto\x12\x04raft\"\x99\x01\n\x14\x41ppendEntriesRequest\x12\x0c\n\x04term\x18\x01 \x01(\x04\x12\x10\n\x08leaderId\x18\x02 \x01(\x04\x12\x14\n\x0cprevLogIndex\x18\x03 \x01(\x04\x12\x13\n\x0bprevLogTerm\x18\x04 \x01(\x04\x12\x0f\n\x07\x65ntries\x18\x05 \x03(\x0c\x12\x14\n\x0cleaderCommit\x18\x06 \x01(\x04\x12\x0f\n\x07peer_id\x18\x07 \x01(\x04\"G\n\x15\x41ppendEntriesResponse\x12\x0c\n\x04term\x18\x01 \x01(\x04\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x0f\n\x07peer_id\x18\x03 \x01(\x04\"s\n\x12RequestVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x04\x12\x13\n\x0b\x63\x61ndidateId\x18\x02 \x01(\x04\x12\x14\n\x0clastLogIndex\x18\x03 \x01(\x04\x12\x13\n\x0blastLogTerm\x18\x04 \x01(\x04\x12\x0f\n\x07peer_id\x18\x05 \x01(\x04\"I\n\x13RequestVoteResponse\x12\x0c\n\x04term\x18\x01 \x01(\x04\x12\x13\n\x0bvoteGranted\x18\x02 \x01(\x08\x12\x0f\n\x07peer_id\x18\x03 \x01(\x04\x32\x9f\x01\n\x0bRaftService\x12J\n\rAppendEntries\x12\x1a.raft.AppendEntriesRequest\x1a\x1b.raft.AppendEntriesResponse\"\x00\x12\x44\n\x0bRequestVote\x12\x18.raft.RequestVoteRequest\x1a\x19.raft.RequestVoteResponse\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\nraft.proto\x12\x04raft\"\x99\x01\n\x14\x41ppendEntriesRequest\x12\x0c\n\x04term\x18\x01 \x01(\x04\x12\x10\n\x08leaderId\x18\x02 \x01(\x04\x12\x14\n\x0cprevLogIndex\x18\x03 \x01(\x04\x12\x13\n\x0bprevLogTerm\x18\x04 \x01(\x04\x12\x0f\n\x07\x65ntries\x18\x05 \x03(\x0c\x12\x14\n\x0cleaderCommit\x18\x06 \x01(\x04\x12\x0f\n\x07peer_id\x18\x07 \x01(\x04\"]\n\x15\x41ppendEntriesResponse\x12\x0c\n\x04term\x18\x01 \x01(\x04\x12\x0f\n\x07success\x18\x02 \x01(\x08\x12\x0f\n\x07peer_id\x18\x03 \x01(\x04\x12\x14\n\x0crequest_term\x18\x04 \x01(\x04\"s\n\x12RequestVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x04\x12\x13\n\x0b\x63\x61ndidateId\x18\x02 \x01(\x04\x12\x14\n\x0clastLogIndex\x18\x03 \x01(\x04\x12\x13\n\x0blastLogTerm\x18\x04 \x01(\x04\x12\x0f\n\x07peer_id\x18\x05 \x01(\x04\"I\n\x13RequestVoteResponse\x12\x0c\n\x04term\x18\x01 \x01(\x04\x12\x13\n\x0bvoteGranted\x18\x02 \x01(\x08\x12\x0f\n\x07peer_id\x18\x03 \x01(\x04\x32\x9f\x01\n\x0bRaftService\x12J\n\rAppendEntries\x12\x1a.raft.AppendEntriesRequest\x1a\x1b.raft.AppendEntriesResponse\"\x00\x12\x44\n\x0bRequestVote\x12\x18.raft.RequestVoteRequest\x1a\x19.raft.RequestVoteResponse\"\x00\x62\x06proto3'
 )
 
 
@@ -125,6 +125,13 @@ _APPENDENTRIESRESPONSE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='request_term', full_name='raft.AppendEntriesResponse.request_term', index=3,
+      number=4, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -138,7 +145,7 @@ _APPENDENTRIESRESPONSE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=176,
-  serialized_end=247,
+  serialized_end=269,
 )
 
 
@@ -196,8 +203,8 @@ _REQUESTVOTEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=249,
-  serialized_end=364,
+  serialized_start=271,
+  serialized_end=386,
 )
 
 
@@ -241,8 +248,8 @@ _REQUESTVOTERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=366,
-  serialized_end=439,
+  serialized_start=388,
+  serialized_end=461,
 )
 
 DESCRIPTOR.message_types_by_name['AppendEntriesRequest'] = _APPENDENTRIESREQUEST
@@ -287,8 +294,8 @@ _RAFTSERVICE = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=442,
-  serialized_end=601,
+  serialized_start=464,
+  serialized_end=623,
   methods=[
   _descriptor.MethodDescriptor(
     name='AppendEntries',

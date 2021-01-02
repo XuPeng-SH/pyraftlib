@@ -30,10 +30,13 @@ class Candidate(Follower):
         self.service.send_vote_requests(request)
 
     def on_peer_append_entries(self, request):
-        active_term = request.term >= self.persist_state.current_term
+        current_term = self.persist_state.current_term
+        active_term = request.term >= current_term
         response = AppendEntriesResponse()
         response.peer_id = self.name
-        response.term = request.term
+        # response.term = self.term
+        response.term = current_term
+        response.request_term = request.term
         if not active_term:
             logger.info(f'Candidate {self.name} recieved AE from {request.leaderId} with stale term. Ignore')
             response.success = False

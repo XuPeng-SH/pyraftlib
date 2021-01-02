@@ -40,12 +40,14 @@ class Follower(State):
 
         response = AppendEntriesResponse()
         response.peer_id = self.name
-        response.term = request.term
+        response.term = current_term
+        response.request_term = request.term
         if not active_term:
             logger.info(f'{self.name} current_term {current_term} received {request.peer_id} with stale term {request.term}. Ignore')
             response.success = False
             return response
 
+        response.term = request.term
         self.persist_state.current_term = request.term
         self.volatile_state.leader_id = request.peer_id
         self.refresh_timer()
