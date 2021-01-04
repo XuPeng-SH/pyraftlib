@@ -41,7 +41,7 @@ class Leader(State):
         return True, None
 
     def on_peer_vote_request(self, request):
-        active_term = request.term > self.log.get_current_term
+        active_term = request.term > self.log.get_current_term()
         if active_term:
             logger.info(f'{self} will convert to follower: current_term={self.log.get_current_term()} request.term={request.term}')
             self.service.convert_to(Follower)
