@@ -5,7 +5,7 @@ class MockHandle(BaseLog):
     HANDLE_NAME = 'MockHandle'
 
     @classmethod
-    def build(cls, conf):
+    def build(cls, conf, **kwargs):
         assert conf['name'] == cls.HANDLE_NAME
         return cls(conf)
 

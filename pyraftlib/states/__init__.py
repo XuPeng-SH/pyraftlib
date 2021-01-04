@@ -45,20 +45,17 @@ class State:
         self.name = stale_state.name
         self.service = stale_state.service
         self.volatile_state = stale_state.volatile_state
-        # self.persist_state = stale_state.persist_state
         self.log = stale_state.log
 
     def init(self):
         assert self.name is not None
         self.volatile_state = VolatileState(0, 0)
-        # self.persist_state = PersistState()
-        self.log = LogFactory.build(self.service.conf)
+        self.log = LogFactory.build(self.service.conf, **self.service.peer_info)
 
     def run_loop_func(self):
         time.sleep(0.5)
 
     def on_peer_append_entries_response(self, response):
-        # current_term = self.persist_state.current_term
         current_term = self.log.get_current_term()
         if response.request_term != current_term:
             logger.warning(f'Received AE Resp of term {response.request_term} while current_term is {current_term}. Skip it')

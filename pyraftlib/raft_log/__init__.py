@@ -9,13 +9,13 @@ class LogFactory(object):
         return handler_class
 
     @classmethod
-    def build(cls, conf):
+    def build(cls, conf, **kwargs):
         log_handle_conf = conf.get('log_handle', {})
         assert log_handle_conf, f'"log_handle" not found in conf'
         name = log_handle_conf.get('name')
         log_handle_class = cls.__HANDLERS__.get(name)
         assert log_handle_class, f'Specified log handle "{name}" not found'
-        log_handle = log_handle_class.build(log_handle_conf)
+        log_handle = log_handle_class.build(log_handle_conf, **kwargs)
         return log_handle
 
 
@@ -39,3 +39,4 @@ class BaseLog(object):
         raise NotImplemented
 
 from pyraftlib.raft_log.mock_handle import MockHandle
+from pyraftlib.raft_log.json_handle import JsonHandle

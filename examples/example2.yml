@@ -4,7 +4,7 @@ cluster:
     peers: 1@localhost:18888,2@localhost:18788,3@localhost:18988
 
 log_handle:
-    name: MockHandle
+    name: JsonHandle
 
 security:
     server_cacert: ./demo_keys/cacert.pem
