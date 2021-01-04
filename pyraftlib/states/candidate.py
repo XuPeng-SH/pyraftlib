@@ -1,4 +1,5 @@
 import logging
+import time
 
 from pyraftlib.states.follower import Follower
 from pyraftlib.events import VoteRequestEvent
@@ -47,6 +48,7 @@ class Candidate(Follower):
         return self.service.on_peer_append_entries(request)
 
     def on_peer_vote_response(self, response):
+        self.service.set_last_resp_ts(response.peer_id, time.time())
         self.votes_count += 1 if response.voteGranted else 0
         logger.info(f'{self.Display} {self.name} has vote count: {self.votes_count}')
         if self.votes_count > (len(self.service.peers) + 1) / 2:

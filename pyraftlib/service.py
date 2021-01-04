@@ -3,6 +3,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import logging
+import time
 import yaml
 import threading
 from collections import defaultdict
@@ -36,6 +37,8 @@ class Service:
         self.peer_info['peer_id'] = peer_id
         self.peers = peers
         secure_config = self.conf.get('security', {})
+        self.loop_running = True
+        self.raft_loop = threading.Thread(target=self.do_raft_loop)
         self.rpc_server = RpcServer(peer_info=self.peer_info, peers=self.peers, service=self, **secure_config)
         self.cluster = self.rpc_server.cluster
         self.state = None
@@ -48,6 +51,16 @@ class Service:
             conf = yaml.load(f, Loader=yaml.FullLoader)
         return conf
 
+    def set_last_resp_ts(self, peer_id, ts):
+        peer = self.peers.get(peer_id, None)
+        if not peer:
+            logger.error(f'Specified peer {peer_id} not found!')
+            return False
+
+        peer['last_resp_ts'] = ts
+        # logger.info(f'Set peer_id={peer_id} last_resp_ts={ts}')
+        return True
+
     def convert_to(self, state_type):
         self.state.shutdown()
         logger.info(f'>>> State {type(self.state).__name__} Converted To {state_type.__name__} ')
@@ -56,6 +69,19 @@ class Service:
     def start(self):
         self.rpc_server.start()
         self.state = Follower(name=self.peer_info['peer_id'], service=self)
+        self.raft_loop.start()
+
+    def do_raft_loop(self):
+        while self.loop_running:
+            self.state.run_loop_func()
+            # time.sleep(0.5)
+            logger.info(f'do_raft_loop state={self.state}')
+
+        logger.info(f'raft_loop exited')
+
+    def stop_raft_loop(self):
+        self.loop_running = False
+        self.raft_loop.join()
 
     def run(self):
         self.start()
@@ -68,6 +94,7 @@ class Service:
         logger.info(f'Service is down now')
 
     def stop(self):
+        self.stop_raft_loop()
         with self.lock:
             self.rpc_server.stop()
             self.terminated = True

@@ -1,4 +1,5 @@
 import logging
+import time
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,9 @@ class State:
         assert self.name is not None
         self.volatile_state = VolatileState(0, 0)
         self.persist_state = PersistState()
+
+    def run_loop_func(self):
+        time.sleep(0.5)
 
     def on_peer_append_entries_response(self, response):
         current_term = self.persist_state.current_term

@@ -52,6 +52,23 @@ class Leader(State):
         response.peer_id = self.name
         return response
 
+    def run_loop_func(self):
+        self._handle_leader_timeout()
+
+    def _handle_leader_timeout(self):
+        tss = [time.time()]
+        for peer_id, peer in self.service.peers.items():
+            last_resp_ts = peer.get('last_resp_ts', 0)
+            # logger.info(f'peer_id={peer_id} last_resp_ts={last_resp_ts}')
+            tss.append(last_resp_ts)
+
+        sorted(tss, reverse=True)
+        elapsed = time.time() - tss[len(tss) >> 1]
+        #TODO
+        max_timeout = 8 * 8 ** -1
+        if elapsed >= max_timeout:
+            self.service.convert_to(Follower)
+
     def on_peer_append_entries(self, request):
         active_term = request.term > self.persist_state.current_term
         response = AppendEntriesResponse()
@@ -67,6 +84,7 @@ class Leader(State):
         return self.on_peer_append_entries(event)
 
     def on_peer_append_entries_response(self, response):
+        self.service.set_last_resp_ts(response.peer_id, time.time())
         current_term, to_skip = super().on_peer_append_entries_response(response)
         if to_skip:
             return current_term, False
