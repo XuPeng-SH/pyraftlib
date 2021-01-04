@@ -13,7 +13,7 @@ class Follower(State):
     Display = 'Follower'
     def __init__(self, name=None, stale_state=None, service=None):
         super().__init__(name=name, stale_state=stale_state, service=service)
-        self.persist_state.voted_for = None
+        self.log.set_vote_for(None)
         self.timer = ThreadWorker(on_event=self.on_timer_event, on_timeout=self.on_timer_timerout,
                 get_timeout=self.get_timer_timeout)
         self.timer.start()
@@ -35,7 +35,7 @@ class Follower(State):
         return False, reason
 
     def on_peer_append_entries(self, request):
-        current_term = self.persist_state.current_term
+        current_term = self.log.get_current_term()
         active_term = request.term >= current_term
 
         response = AppendEntriesResponse()
@@ -48,7 +48,7 @@ class Follower(State):
             return response
 
         response.term = request.term
-        self.persist_state.current_term = request.term
+        self.log.set_current_term(request.term)
         self.volatile_state.leader_id = request.peer_id
         self.refresh_timer()
         response.success = True
@@ -59,13 +59,13 @@ class Follower(State):
         return True, None
 
     def on_peer_vote_request(self, request):
-        current_term = self.persist_state.current_term
+        current_term = self.log.get_current_term()
         active_term = request.term >= current_term
-        can_vote = self.persist_state.voted_for in (request.peer_id, None) or request.term > current_term
+        can_vote = self.log.get_vote_for() in (request.peer_id, None) or request.term > current_term
         granted = active_term and can_vote
 
         if granted:
-            self.persist_state.voted_for = request.peer_id
+            self.log.set_vote_for(request.peer_id)
             self.refresh_timer()
 
         logger.info(f'{self.Display} {self.name} voting for {request.candidateId}. Term:{current_term} Active:{active_term} CanVote:{can_vote} Granted:{granted}')

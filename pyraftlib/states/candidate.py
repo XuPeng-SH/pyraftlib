@@ -14,24 +14,24 @@ class Candidate(Follower):
     Display = 'Candidate'
     def __init__(self, name=None, stale_state=None, service=None):
         super().__init__(name=name, stale_state=stale_state, service=service)
-        self.persist_state.current_term += 1
+        self.log.set_current_term(self.log.get_current_term() + 1)
         self.votes_count = 1
-        logger.info(f'Candidate {self.name} Start New Election. Term: {self.persist_state.current_term}')
+        logger.info(f'Candidate {self.name} Start New Election. Term: {self.log.get_current_term()}')
         self.send_vote_requests()
 
     def send_vote_requests(self):
         logger.info(f'Candidate {self.name} is Broadcasting RequestVote')
-        self.persist_state.voted_for = self.name
-        event = VoteRequestEvent(term=self.persist_state.current_term,
+        self.log.set_vote_for(self.name)
+        event = VoteRequestEvent(term=self.log.get_current_term(),
                                  source=self.name)
         request = RequestVoteRequest()
-        request.term = self.persist_state.current_term
+        request.term = self.log.get_current_term()
         request.candidateId = self.name
         request.peer_id = self.name
         self.service.send_vote_requests(request)
 
     def on_peer_append_entries(self, request):
-        current_term = self.persist_state.current_term
+        current_term = self.log.get_current_term()
         active_term = request.term >= current_term
         response = AppendEntriesResponse()
         response.peer_id = self.name

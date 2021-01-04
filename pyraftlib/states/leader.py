@@ -23,7 +23,7 @@ class Leader(State):
 
     def send_append_entries(self):
         request = AppendEntriesRequest()
-        request.term = self.persist_state.current_term
+        request.term = self.log.get_current_term()
         request.leaderId = self.name
         request.peer_id = self.name
         self.service.send_append_entries(request)
@@ -41,14 +41,14 @@ class Leader(State):
         return True, None
 
     def on_peer_vote_request(self, request):
-        active_term = request.term > self.persist_state.current_term
+        active_term = request.term > self.log.get_current_term
         if active_term:
-            logger.info(f'{self} will convert to follower: current_term={self.persist_state.current_term} request.term={request.term}')
+            logger.info(f'{self} will convert to follower: current_term={self.log.get_current_term()} request.term={request.term}')
             self.service.convert_to(Follower)
             return self.service.on_peer_vote_request(request)
 
         response = RequestVoteResponse()
-        response.term = self.persist_state.current_term
+        response.term = self.log.get_current_term()
         response.voteGranted = False
         response.peer_id = self.name
         return response
@@ -71,7 +71,7 @@ class Leader(State):
             self.service.convert_to(Follower)
 
     def on_peer_append_entries(self, request):
-        active_term = request.term > self.persist_state.current_term
+        active_term = request.term > self.log.get_current_term()
         response = AppendEntriesResponse()
         response.peer_id = self.name
         response.term = request.term
@@ -92,8 +92,8 @@ class Leader(State):
 
         if current_term < response.term:
             self.service.convert_to(Follower)
-            self.persist_state.current_term = response.term
-            self.persist_state.voted_for = None
+            self.log.set_current_term(response.term)
+            self.log.set_vote_for(None)
             self.volatile_state.leader_id = None
 
         # TODO:
