@@ -49,6 +49,7 @@ class Follower(State):
 
         response.term = request.term
         self.log.set_current_term(request.term)
+        self.log.set_vote_for(request.peer_id)
         self.volatile_state.leader_id = request.peer_id
         self.refresh_timer()
         response.success = True
