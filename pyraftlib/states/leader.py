@@ -43,6 +43,7 @@ class Leader(State):
     def on_peer_vote_request(self, request):
         active_term = request.term > self.persist_state.current_term
         if active_term:
+            logger.info(f'{self} will convert to follower: current_term={self.persist_state.current_term} request.term={request.term}')
             self.service.convert_to(Follower)
             return self.service.on_peer_vote_request(request)
 
@@ -59,14 +60,14 @@ class Leader(State):
         tss = [time.time()]
         for peer_id, peer in self.service.peers.items():
             last_resp_ts = peer.get('last_resp_ts', 0)
-            # logger.info(f'peer_id={peer_id} last_resp_ts={last_resp_ts}')
             tss.append(last_resp_ts)
 
-        sorted(tss, reverse=True)
+        tss = sorted(tss, reverse=True)
         elapsed = time.time() - tss[len(tss) >> 1]
         #TODO
         max_timeout = 8 * 8 ** -1
         if elapsed >= max_timeout:
+            logger.info(f'{self} will convert to follower: elapsed time {elapsed} passed')
             self.service.convert_to(Follower)
 
     def on_peer_append_entries(self, request):
@@ -96,7 +97,7 @@ class Leader(State):
             self.volatile_state.leader_id = None
 
         # TODO:
-        logger.info(f'{self.state} Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
+        logger.info(f'{self} Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
 
         return response.term, True
 

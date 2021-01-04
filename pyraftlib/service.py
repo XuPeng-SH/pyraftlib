@@ -74,8 +74,6 @@ class Service:
     def do_raft_loop(self):
         while self.loop_running:
             self.state.run_loop_func()
-            # time.sleep(0.5)
-            logger.info(f'do_raft_loop state={self.state}')
 
         logger.info(f'raft_loop exited')
 

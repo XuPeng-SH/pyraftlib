@@ -68,7 +68,7 @@ class Follower(State):
             self.persist_state.voted_for = request.peer_id
             self.refresh_timer()
 
-        logger.info(f'{self.Display} {self.name} voting for {request.candidateId}. Active:{active_term} CanVote:{can_vote} Granted:{granted}')
+        logger.info(f'{self.Display} {self.name} voting for {request.candidateId}. Term:{current_term} Active:{active_term} CanVote:{can_vote} Granted:{granted}')
         response = RequestVoteResponse()
         response.term = current_term
         response.voteGranted = granted
