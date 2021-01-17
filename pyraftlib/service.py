@@ -79,7 +79,8 @@ class Service:
         while self.loop_running:
             try:
                 entries = self.log_entries_queue.get(timeout=1)
-                logger.info(f'get log entries {entries}')
+                # logger.info(f'get {len(entries)} entries: [{entries[0].entry.decode()}, ...]')
+                self.on_receive_log_entries(entries)
             except queue.Empty:
                 continue
 
@@ -115,7 +116,7 @@ class Service:
         if self.state:
             self.state.shutdown()
 
-    def log_entries(self, entries):
+    def log_entries_async(self, entries):
         if not self.loop_running:
             # Define exception
             raise RuntimeError(f'Raft service is not running')
@@ -138,6 +139,9 @@ class Service:
 
     def on_peer_append_entries(self, request):
         return self.state.on_peer_append_entries(request)
+
+    def on_receive_log_entries(self, entries):
+        return self.state.on_receive_log_entries(entries)
 
 
 if __name__ == '__main__':

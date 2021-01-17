@@ -101,6 +101,11 @@ class Leader(State):
 
         return response.term, True
 
+    def on_receive_log_entries(self, entries):
+        for event in entries:
+            logger.info(f'received entry {event.entry.entry}')
+            event.mark_done()
+
     def shutdown(self):
         self.timer.submit(TerminateEvent())
         # self.timer.join()
