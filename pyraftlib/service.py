@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import logging
 import time
 import yaml
+import queue
 import threading
 from collections import defaultdict
 
@@ -45,6 +46,8 @@ class Service:
         self.lock = threading.Lock()
         self.terminate_cv = threading.Condition(self.lock)
         self.terminated = False
+        self.log_entries_queue = queue.Queue()
+        self.log_entries_loop = threading.Thread(target=self.do_log_entries_loop)
 
     def load_conf_from_yaml_path(self, yaml_path):
         with open(yaml_path, 'r') as f:
@@ -69,7 +72,18 @@ class Service:
     def start(self):
         self.rpc_server.start()
         self.state = Follower(name=self.peer_info['peer_id'], service=self)
+        self.log_entries_loop.start()
         self.raft_loop.start()
+
+    def do_log_entries_loop(self):
+        while self.loop_running:
+            try:
+                entries = self.log_entries_queue.get(timeout=1)
+                logger.info(f'get log entries {entries}')
+            except queue.Empty:
+                continue
+
+        logger.info(f'log_entries loop exited')
 
     def do_raft_loop(self):
         while self.loop_running:
@@ -80,6 +94,7 @@ class Service:
     def stop_raft_loop(self):
         self.loop_running = False
         self.raft_loop.join()
+        self.log_entries_loop.join()
 
     def run(self):
         self.start()
@@ -99,6 +114,12 @@ class Service:
             self.terminate_cv.notify_all()
         if self.state:
             self.state.shutdown()
+
+    def log_entries(self, entries):
+        if not self.loop_running:
+            # Define exception
+            raise RuntimeError(f'Raft service is not running')
+        self.log_entries_queue.put_nowait(entries)
 
     def send_append_entries(self, request):
         self.cluster.send_append_entries(request)
