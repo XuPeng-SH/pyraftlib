@@ -23,8 +23,8 @@ class MockHandle(BaseLog):
     def get_last_log_index(self):
         return self.last_log_index
 
-    def set_last_log_index(self, index):
-        self.last_log_index = index
+    # def set_last_log_index(self, index):
+    #     self.last_log_index = index
 
     def get_vote_for(self):
         return self.vote_for

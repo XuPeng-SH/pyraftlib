@@ -29,14 +29,17 @@ class BaseLog(object):
     def get_last_log_index(self):
         raise NotImplemented
 
-    def set_last_log_index(self, index):
-        raise NotImplemented
+    # def set_last_log_index(self, index):
+    #     raise NotImplemented()
 
     def get_vote_for(self):
         raise NotImplemented()
 
     def set_vote_for(self, vote_for):
-        raise NotImplemented
+        raise NotImplemented()
+
+    def log_entries(self, entries):
+        raise NotImplemented()
 
 from pyraftlib.raft_log.mock_handle import MockHandle
 from pyraftlib.raft_log.json_handle import JsonHandle
