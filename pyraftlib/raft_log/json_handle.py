@@ -1,7 +1,10 @@
 import sys, os
+import logging
 import json
 import threading
 from pyraftlib.raft_log import LogFactory, BaseLog
+
+logger = logging.getLogger(__name__)
 
 RAFT_LOG_DIR_NAME = 'rlog'
 RAFT_LOG_META_NAME_TEMPLATE = 'meta-peer-{}.json'

@@ -104,6 +104,7 @@ class Leader(State):
     def on_receive_log_entries(self, entries):
         for event in entries:
             logger.info(f'received entry {event.entry.entry}')
+            self.log.log_entries([event.entry])
             event.mark_done()
 
     def shutdown(self):
