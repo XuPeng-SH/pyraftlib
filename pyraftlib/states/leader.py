@@ -22,14 +22,19 @@ class Leader(State):
         return 3* 12 ** -1
 
     def send_append_entries(self):
-        request = AppendEntriesRequest()
-        request.term = self.log.get_current_term()
-        request.leaderId = self.name
-        request.peer_id = self.name
-        last_entry = self.log.last_log_entry()
-        request.prevLogIndex = last_entry.index
-        request.prevLogTerm = last_entry.term
-        self.service.send_append_entries(request)
+        requests = []
+        for peer_id, peer in self.service.peers.items():
+            request = AppendEntriesRequest()
+            request.term = self.log.get_current_term()
+            request.leaderId = self.name
+            request.peer_id = self.name
+            last_entry = self.log.last_log_entry()
+            request.prevLogIndex = last_entry.index
+            request.prevLogTerm = last_entry.term
+            entries = self.log.get_entries(from_index=peer.next_index)
+            request.entries = entries
+            requests[peer_id] = request
+        self.service.send_append_entries(requests)
 
     def on_timer_timerout(self):
         self.send_append_entries()

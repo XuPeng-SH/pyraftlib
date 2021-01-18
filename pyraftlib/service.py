@@ -137,8 +137,8 @@ class Service:
             raise RuntimeError(f'Raft service is not running')
         self.log_entries_queue.put_nowait(entries)
 
-    def send_append_entries(self, request):
-        self.cluster.send_append_entries(request)
+    def send_append_entries(self, requests):
+        self.cluster.send_append_entries(requests)
 
     def send_vote_requests(self, event):
         self.cluster.send_vote_requests(event)

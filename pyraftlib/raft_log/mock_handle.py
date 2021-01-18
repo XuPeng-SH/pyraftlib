@@ -32,3 +32,6 @@ class MockHandle(BaseLog):
 
     def set_vote_for(self, vote_for):
         self.vote_for = vote_for
+
+    def get_entries(self, from_index=None, count=None):
+        return []

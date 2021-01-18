@@ -53,8 +53,9 @@ class Follower(State):
             self.log.set_vote_for(0)
             self.volatile_state.leader_id = request.peer_id
         assert self.volatile_state.leader_id == request.leaderId
+        logger.info(f'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX {request.entries}')
+        self.log.log_entries(request.entries)
         self.refresh_timer()
-        # self.log.log_entries()
         response.success = True
         return response
 

@@ -37,9 +37,9 @@ class Cluster(object):
 
         raise RuntimeError(f'Unkown response [{response.__class__}]')
 
-    def send_append_entries(self, request):
+    def send_append_entries(self, requests):
         for peer_id, client in self.active_peers.items():
-            client.AppendEntries(request, sync=False)
+            client.AppendEntries(requests[peer_id], sync=False)
 
     def send_vote_requests(self, request):
         for peer_id, client in self.active_peers.items():

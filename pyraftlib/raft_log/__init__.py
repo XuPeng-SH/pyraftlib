@@ -41,5 +41,8 @@ class BaseLog(object):
     def log_entries(self, entries):
         raise NotImplemented()
 
+    def get_entries(self, from_index=None, count=None):
+        raise NotImplemented()
+
 from pyraftlib.raft_log.mock_handle import MockHandle
 from pyraftlib.raft_log.json_handle import JsonHandle
