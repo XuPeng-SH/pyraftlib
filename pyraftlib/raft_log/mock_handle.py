@@ -12,7 +12,8 @@ class MockHandle(BaseLog):
     def __init__(self, conf):
         self.current_term = 0
         self.vote_for = 0
-        self.last_log_index = 0
+        # self.prev_log_index = 0
+        self.prev_log_entry = None
 
     def get_current_term(self):
         return self.current_term
@@ -20,8 +21,8 @@ class MockHandle(BaseLog):
     def set_current_term(self, term):
         self.current_term = term
 
-    def get_last_log_index(self):
-        return self.last_log_index
+    def last_log_entry(self):
+        return self.prev_log_entry
 
     # def set_last_log_index(self, index):
     #     self.last_log_index = index

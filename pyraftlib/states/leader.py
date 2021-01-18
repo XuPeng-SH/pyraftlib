@@ -26,6 +26,9 @@ class Leader(State):
         request.term = self.log.get_current_term()
         request.leaderId = self.name
         request.peer_id = self.name
+        last_entry = self.log.last_log_entry()
+        request.prevLogIndex = last_entry.index
+        request.prevLogTerm = last_entry.term
         self.service.send_append_entries(request)
 
     def on_timer_timerout(self):

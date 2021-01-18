@@ -26,7 +26,7 @@ class BaseLog(object):
     def set_current_term(self, term):
         raise NotImplemented()
 
-    def get_last_log_index(self):
+    def last_log_entry(self):
         raise NotImplemented
 
     # def set_last_log_index(self, index):

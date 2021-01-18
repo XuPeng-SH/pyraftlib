@@ -15,7 +15,7 @@ message AppendEntriesRequest {
 
     uint64 prevLogIndex = 3;
     uint64 prevLogTerm = 4;
-    repeated bytes entries = 5;
+    repeated LogEntry entries = 5;
     uint64 leaderCommit = 6;
     uint64 peer_id = 7;
 }

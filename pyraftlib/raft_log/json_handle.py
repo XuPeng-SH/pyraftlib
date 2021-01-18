@@ -31,11 +31,14 @@ class DataCache:
             return self.cache[0].index
 
     @property
-    def last_index(self):
+    def last_entry(self):
         with self.lock:
             if len(self.cache) == 0:
-                return 0
-            return self.cache[-1].index
+                empty_entry = LogEntry()
+                empty_entry.index = 0
+                empty_entry.term = 0
+                return empty_entry
+            return self.cache[-1]
 
     def insert(self, entry):
         if not self.in_mutation:
@@ -67,7 +70,7 @@ class DataCache:
             return True
 
         with self.lock:
-            if self.dirty[0].index != self.last_index + 1:
+            if self.dirty[0].index != self.last_entry.index + 1:
                 return False
             self.cache.extend(self.dirty)
             if self.capacity != -1 and len(self.cache) > self.capacity:
@@ -146,8 +149,8 @@ class JsonHandle(BaseLog):
     def set_current_term(self, term):
         self._update(current_term=term)
 
-    def get_last_log_index(self):
-        return self.data_values_cache.last_index
+    def last_log_entry(self):
+        return self.data_values_cache.last_entry
 
     def get_vote_for(self):
         with self.lock:
@@ -162,7 +165,7 @@ class JsonHandle(BaseLog):
         with self.data_lock:
             to_dump = bytes()
             self.data_values_cache.start_mutation()
-            last_index = self.data_values_cache.last_index
+            last_index = self.data_values_cache.last_entry.index
             for i, entry in enumerate(entries):
                 if entry.index != last_index + i + 1:
                     logger.error(f'Entries should be consestive from last_index')
