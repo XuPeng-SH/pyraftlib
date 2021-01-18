@@ -50,7 +50,7 @@ class Follower(State):
         response.term = request.term
         if request.term > current_term:
             self.log.set_current_term(request.term)
-        # self.log.set_vote_for(request.peer_id)
+            self.log.set_vote_for(0)
             self.volatile_state.leader_id = request.peer_id
         assert self.volatile_state.leader_id == request.leaderId
         self.refresh_timer()
