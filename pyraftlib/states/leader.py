@@ -59,7 +59,8 @@ class Leader(State):
     def _handle_leader_timeout(self):
         tss = [time.time()]
         for peer_id, peer in self.service.peers.items():
-            last_resp_ts = peer.get('last_resp_ts', 0)
+            # last_resp_ts = peer.get('last_resp_ts', 0)
+            last_resp_ts = peer.last_resp_ts
             tss.append(last_resp_ts)
 
         tss = sorted(tss, reverse=True)

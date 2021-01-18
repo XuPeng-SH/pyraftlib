@@ -50,7 +50,7 @@ class State:
     def init(self):
         assert self.name is not None
         self.volatile_state = VolatileState(0, 0)
-        self.log = LogFactory.build(self.service.conf, **self.service.peer_info)
+        self.log = LogFactory.build(self.service.conf, peer_id=self.service.self_peer.id)
 
     def run_loop_func(self):
         time.sleep(0.5)

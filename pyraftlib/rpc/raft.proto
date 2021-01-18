@@ -26,6 +26,7 @@ message AppendEntriesResponse {
     uint64 peer_id = 3;
 
     uint64 request_term = 4;
+    uint64 match_index = 5;
 }
 
 message RequestVoteRequest {

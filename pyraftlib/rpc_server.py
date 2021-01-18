@@ -15,17 +15,18 @@ logger = logging.getLogger(__name__)
 
 
 class RpcServer:
-    def __init__(self, peer_info, peers, service, **kwargs):
+    def __init__(self, self_peer, peers, service, **kwargs):
         self.service = service
         self.peers = peers
-        self.peer_info = peer_info
+        self.self_peer = self_peer
         server_cacert = kwargs.get('server_cacert', None)
         server_private_key = kwargs.get('server_private_key', None)
         client_cacert = kwargs.get('client_cacert', None)
 
-        self.cluster = Cluster(self.peer_info, self.peers, service, client_cacert=client_cacert)
+        self.cluster = Cluster(self.self_peer, self.peers, service, client_cacert=client_cacert)
 
-        self.add_port_args = [f'[::]:{self.peer_info["port"]}']
+        self.add_port_args = [f'[::]:{self.self_peer.port}']
+        # self.add_port_args = [f'[::]:{self.self_peer["port"]}']
 
         self.server_credentials = None
 
@@ -54,12 +55,13 @@ class RpcServer:
         logger.info(header)
         cluster_info_1 = f'Cluster of {len(self.peers) + 1} Peers'
         logger.info(cluster_info_1)
-        self_peer_info = f'\tPeerId={self.peer_info["peer_id"]}, PeerHost={self.peer_info["host"]}, PeerPort={self.peer_info["port"]}'
+        self_peer_info = f'\tPeerId={self.self_peer.id}, PeerHost={self.self_peer.host}, PeerPort={self.self_peer.port}'
+        # self_peer_info = f'\tPeerId={self.self_peer["peer_id"]}, PeerHost={self.self_peer["host"]}, PeerPort={self.self_peer["port"]}'
         logger.info(self_peer_info)
         for pid, peer in self.peers.items():
-            peer_info = f'\tPeerId={pid}, PeerHost={peer["host"]}, PeerPort={peer["port"]}'
-            logger.info(peer_info)
-        logger.info(f'This server\'s PeerId is \"{self.peer_info["peer_id"]}\"')
+            self_peer = f'\tPeerId={pid}, PeerHost={peer.host}, PeerPort={peer.port}'
+            logger.info(self_peer)
+        logger.info(f'This server\'s PeerId is \"{self.self_peer.id}\"')
         tail = f'---------------------Raft Service Info  End------------------'
         logger.info(tail)
 
@@ -68,7 +70,7 @@ class RpcServer:
         handler = RpcHandler(cluster=self.cluster, service=self.service)
         add_RaftServiceServicer_to_server(handler, self.server_impl)
         self.add_port_method(*self.add_port_args)
-        logger.info(f'RpcServer is listening on port {self.peer_info["port"]}')
+        logger.info(f'RpcServer is listening on port {self.self_peer.port}')
         self.server_impl.start()
 
     def stop(self):

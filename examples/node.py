@@ -30,7 +30,9 @@ def Run(yaml_path):
                 event.result()
                 if not event.error:
                     i += 1
-                time.sleep(0.5)
+                    time.sleep(0.5)
+                else:
+                    time.sleep(0.5)
             except Exception as exp:
                 logger.error(exp)
                 break

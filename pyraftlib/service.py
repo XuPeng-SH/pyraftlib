@@ -14,7 +14,17 @@ from pyraftlib.states.follower import Follower
 
 logger = logging.getLogger(__name__)
 
-def parse_conf_peers(peers):
+class Peer:
+    def __init__(self, uid, host, port, **kwargs):
+        self.id = uid
+        self.host = host
+        self.port = port
+        self.match_index = 0
+        self.next_index = 1
+        self.last_resp_ts = 0
+
+def parse_conf_peers(peers, self_id):
+    self_peer = None
     info = {}
     peers = peers.split(',')
     for peer in peers:
@@ -23,8 +33,12 @@ def parse_conf_peers(peers):
             continue
         peer_id, peer_info = peer.split('@')
         host, port = peer_info.split(':')
-        info[int(peer_id)] = dict(host=host, port=port)
-    return info
+        peer_id = int(peer_id)
+        if peer_id == self_id:
+            self_peer = Peer(peer_id, host, port)
+        else:
+            info[peer_id] = Peer(peer_id, host, port)
+    return self_peer, info
 
 class Service:
     def __init__(self, yaml_path=None, conf=None):
@@ -33,14 +47,14 @@ class Service:
         self.conf = {} if not self.yaml_path else self.load_conf_from_yaml_path(yaml_path)
         conf and self.conf.update(conf)
         peer_id = self.conf['cluster']['peer_id']
-        peers = parse_conf_peers(self.conf['cluster']['peers'])
-        self.peer_info = peers.pop(peer_id)
-        self.peer_info['peer_id'] = peer_id
-        self.peers = peers
+        self.self_peer, self.peers = parse_conf_peers(self.conf['cluster']['peers'], peer_id)
+        # self.peer_info = peers.pop(peer_id)
+        # self.peer_info['peer_id'] = peer_id
         secure_config = self.conf.get('security', {})
         self.loop_running = True
         self.raft_loop = threading.Thread(target=self.do_raft_loop)
-        self.rpc_server = RpcServer(peer_info=self.peer_info, peers=self.peers, service=self, **secure_config)
+        self.rpc_server = RpcServer(self_peer=self.self_peer, peers=self.peers, service=self, **secure_config)
+        # self.rpc_server = RpcServer(peer_info=self.peer_info, peers=self.peers, service=self, **secure_config)
         self.cluster = self.rpc_server.cluster
         self.state = None
         self.lock = threading.Lock()
@@ -60,7 +74,7 @@ class Service:
             logger.error(f'Specified peer {peer_id} not found!')
             return False
 
-        peer['last_resp_ts'] = ts
+        peer.last_resp_ts = ts
         # logger.info(f'Set peer_id={peer_id} last_resp_ts={ts}')
         return True
 
@@ -71,7 +85,8 @@ class Service:
 
     def start(self):
         self.rpc_server.start()
-        self.state = Follower(name=self.peer_info['peer_id'], service=self)
+        # self.state = Follower(name=self.peer_info['peer_id'], service=self)
+        self.state = Follower(name=self.self_peer.id, service=self)
         self.log_entries_loop.start()
         self.raft_loop.start()
 
