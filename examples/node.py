@@ -25,8 +25,11 @@ def Run(yaml_path):
                 entry.term = 100
                 entry.index = i
                 entry.entry = str.encode(f'hello-{i}')
-                s.log_entries_async([LogEntryEvent(entry)])
-                i += 1
+                event = LogEntryEvent(entry)
+                s.log_entries_async([event])
+                event.result()
+                if not event.error:
+                    i += 1
                 time.sleep(0.5)
             except Exception as exp:
                 logger.error(exp)

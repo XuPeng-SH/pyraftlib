@@ -67,6 +67,13 @@ class State:
             logger.error(f'NotLeader Error for event {event.entry.entry}')
             event.mark_done(error=f'NotLeader')
 
+    # def on_receive_log_entries(self, entries):
+    #     for event in entries:
+    #         logger.info(f'received entry {event.entry.entry}')
+    #         self.log.log_entries([event.entry])
+    #         event.mark_done()
+
+
     def __str__(self):
         return f'[{self.Display}:{self.name}]'
 

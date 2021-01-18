@@ -2,7 +2,10 @@ import sys, os
 import logging
 import json
 import threading
+from google.protobuf.internal.encoder import _VarintBytes
+from google.protobuf.internal.decoder import _DecodeVarint32
 from pyraftlib.raft_log import LogFactory, BaseLog
+from pyraftlib.raft_pb2 import LogEntry
 
 logger = logging.getLogger(__name__)
 
@@ -107,14 +110,25 @@ class JsonHandle(BaseLog):
         self.data_values_cache = DataCache(capacity=1000)
 
         lines = []
-        with open(self.data_log, 'a+') as f:
-            lines = f.readlines()
+        if os.path.exists(self.data_log):
+            with open(self.data_log, 'rb') as f:
+                buf = f.read()
+                n = 0
+                while n < len(buf):
+                    msg_len, new_pos = _DecodeVarint32(buf, n)
+                    n = new_pos
+                    msg_buf = buf[n:n+msg_len]
+                    n += msg_len
+                    entry = LogEntry()
+                    entry.ParseFromString(msg_buf)
+                    lines.append(entry)
+
         if len(lines) >= self.data_values_cache.capacity:
             start_pos = len(lines) - self.data_values_cache.capacity
             lines = lines[start_pos:-1]
 
-        for line in lines:
-            self.data_values_cache.append(json.loads(line))
+        for entry in lines:
+            self.data_values_cache.insert(entry)
 
         self.lock = threading.RLock()
         self.data_lock = threading.RLock()
@@ -133,12 +147,7 @@ class JsonHandle(BaseLog):
         self._update(current_term=term)
 
     def get_last_log_index(self):
-        # with self.lock:
-        #     return self.meta_values.get('last_log_index')
         return self.data_values_cache.last_index
-
-    # def set_last_log_index(self, index):
-    #     self._update(last_log_index=index)
 
     def get_vote_for(self):
         with self.lock:
@@ -151,18 +160,18 @@ class JsonHandle(BaseLog):
         if len(entries) == 0:
             return True
         with self.data_lock:
-            to_dump = ''
+            to_dump = bytes()
             self.data_values_cache.start_mutation()
             last_index = self.data_values_cache.last_index
             for i, entry in enumerate(entries):
                 if entry.index != last_index + i + 1:
                     logger.error(f'Entries should be consestive from last_index')
+                    self.data_values_cache.abort_mutation()
                     return False
                 self.data_values_cache.insert_mutation(entry)
-                to_dump += json.dumps(entry) + '\n'
-
+                to_dump += _VarintBytes(entry.ByteSize()) + entry.SerializeToString()
             try:
-                with open(self.data_log, 'a') as f:
+                with open(self.data_log, 'ab') as f:
                     f.write(to_dump)
             except Exception as exp:
                 logger.error(f'Errors found during log_entries to {self.data_log}: {exp}')
