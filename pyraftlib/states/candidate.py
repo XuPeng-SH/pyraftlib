@@ -28,6 +28,9 @@ class Candidate(Follower):
         request.term = self.log.get_current_term()
         request.candidateId = self.name
         request.peer_id = self.name
+        last_entry = self.log.last_log_entry()
+        request.lastLogTerm = last_entry.term
+        request.lastLogIndex = last_entry.index
         self.service.send_vote_requests(request)
 
     def on_peer_append_entries(self, request):
@@ -54,4 +57,9 @@ class Candidate(Follower):
         if self.votes_count > (len(self.service.peers) + 1) / 2:
             logger.info(f'{self.Display} {self.name} win the election! Converted to Leader')
             self.service.convert_to(Leader)
+        elif response.term > self.log.get_current_term():
+            logger.info(f'{self.Display} {self.name} converted to follower')
+            self.log.set_current_term(response.term)
+            self.service.convert_to(Follower)
+
         return True, None

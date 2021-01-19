@@ -191,6 +191,13 @@ class JsonHandle(BaseLog):
             self.data_values_cache.commit_mutation()
             return True
 
+    def get_entry(self, index):
+        entries = self.get_entries(index, 1)
+        if len(entries) == 0:
+            return None
+        assert len(entries) == 1
+        return entries[0]
+
     def get_entries(self, from_index=None, count=None):
         ret = []
         if count == 0:

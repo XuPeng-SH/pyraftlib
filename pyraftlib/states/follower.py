@@ -52,7 +52,7 @@ class Follower(State):
             self.log.set_current_term(request.term)
             self.log.set_vote_for(0)
             self.volatile_state.leader_id = request.peer_id
-        assert self.volatile_state.leader_id == request.leaderId, f'current_leader={volatile_state.leader_id}, request.leader={request.leaderId}'
+        assert self.volatile_state.leader_id == request.leaderId, f'current_leader={self.volatile_state.leader_id}, request.leader={request.leaderId}'
         self.log.log_entries(request.entries)
         response.last_log_index = self.log.last_log_entry().index
         self.refresh_timer()
@@ -67,7 +67,13 @@ class Follower(State):
         current_term = self.log.get_current_term()
         active_term = request.term >= current_term
         can_vote = self.log.get_vote_for() in (request.peer_id, None) or request.term > current_term
-        granted = active_term and can_vote
+
+        last_entry = self.log.last_log_entry()
+        log_ok = False
+        if last_entry.term < request.lastLogTerm or (last_entry.term == request.lastLogTerm and last_entry.index <= request.lastLogIndex):
+            log_ok = True
+
+        granted = active_term and can_vote and log_ok
 
         if granted:
             self.log.set_vote_for(request.peer_id)
