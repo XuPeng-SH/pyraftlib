@@ -10,6 +10,7 @@ from pyraftlib.states.follower import Follower
 
 logger = logging.getLogger(__name__)
 
+MAX_ENTRY_BATCH_SIZE = 4096
 class Leader(State):
     Display = 'Leader'
     def __init__(self, name=None, stale_state=None, service=None):
@@ -32,7 +33,7 @@ class Leader(State):
             prev_entry = prev_entry if prev_entry else LogEntry()
             request.prevLogIndex = prev_entry.index
             request.prevLogTerm = prev_entry.term
-            entries = self.log.get_entries(from_index=peer.next_index)
+            entries = self.log.get_entries(from_index=peer.next_index, batch_size=MAX_ENTRY_BATCH_SIZE)
             request.entries.extend(entries)
             request.leaderCommit = self.volatile_state.commit_index
             requests[peer_id] = request

@@ -145,9 +145,46 @@ class JsonHandle(BaseLog):
                 entries.append(entry)
             if update:
                 self.last_pos = len(buf)
+                self.pos_index.append(pos)
         if n is None or n >= len(entries):
             return entries
         return entries[len(entries)-n:]
+
+    def load_entries(self, from_index=None, to_index=None, max_size=None):
+        if from_index is None:
+            from_index = 1
+        if to_index is None:
+            to_index = self.last_log_entry().index
+        if from_index < to_index:
+            return []
+        last_pos = self.pos_index[from_index-1]
+        accm = 0
+        poses = []
+        # steps = []
+        for pos in self.pos_index[from_index:to_index+1]:
+            step = pos - last_pos
+            # steps.append(step)
+            accm += step
+            last_pos = pos
+            if max_size is not None and accm >= max_size:
+                break
+
+        with open(self.data_log, 'rb') as f:
+            f.seek(self.pos_index(from_index -1))
+            buf = f.read(accm)
+            pos = 0
+            while pos < len(buf):
+                msg_len, new_pos = _DecodeVarint32(buf, pos)
+                pos = new_pos
+                msg_buf = buf[pos:pos+msg_len]
+                pos += msg_len
+                entry = LogEntry()
+                entry.ParseFromString(msg_buf)
+                entries.append(entry)
+
+
+        # with open(self.data_log, 'rb') as f:
+
 
     def _update(self, **kwargs):
         with self.lock:
@@ -210,9 +247,9 @@ class JsonHandle(BaseLog):
         assert len(entries) == 1, f'len of entries is {len(entries)}'
         return entries[0]
 
-    def get_entries(self, from_index=None, count=None):
+    def get_entries(self, from_index=None, count=None, batch_size=-1):
         ret = []
-        if count == 0:
+        if count == 0 or batch_size == 0:
             return ret
         with self.data_lock:
             last_entry = self.last_log_entry()

@@ -41,7 +41,7 @@ class BaseLog(object):
     def log_entries(self, entries):
         raise NotImplemented()
 
-    def get_entries(self, from_index=None, count=None):
+    def get_entries(self, from_index=None, count=None, batch_size=-1):
         raise NotImplemented()
 
     def truncate_entries(self, from_index):

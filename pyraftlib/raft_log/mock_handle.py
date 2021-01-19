@@ -33,7 +33,7 @@ class MockHandle(BaseLog):
     def set_vote_for(self, vote_for):
         self.vote_for = vote_for
 
-    def get_entries(self, from_index=None, count=None):
+    def get_entries(self, from_index=None, count=None, batch_size=-1):
         return []
 
     def truncate_entries(self, from_index):
