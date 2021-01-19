@@ -47,16 +47,25 @@ class Follower(State):
             response.success = False
             return response
 
+        prev_entry = self.log.get_entry(request.prevLogIndex)
+        # logger.info(f'prevLogIndex {request.prevLogIndex} prev_entry {prev_entry}')
+
+        if not prev_entry and request.prevLogIndex == 1:
+            response.success = True
+        elif not prev_entry or prev_entry.term != request.prevLogTerm:
+            response.success = False
+            return response
+
         response.term = request.term
         if request.term > current_term:
             self.log.set_current_term(request.term)
             self.log.set_vote_for(0)
             self.volatile_state.leader_id = request.peer_id
-<<<<<<< HEAD
-        assert self.volatile_state.leader_id == request.leaderId, f'current_leader={self.volatile_state.leader_id}, request.leader={request.leaderId}'
-=======
-        assert self.volatile_state.leader_id == request.leaderId, f'current_leader={volatile_state.leader_id}, request.leader={request.leaderId}'
->>>>>>> master
+
+        if not self.volatile_state.leader_id:
+            self.volatile_state.leader_id = request.leaderId
+        else:
+            assert self.volatile_state.leader_id == request.leaderId, f'current_leader={self.volatile_state.leader_id}, request.leader={request.leaderId}'
         self.log.log_entries(request.entries)
         response.last_log_index = self.log.last_log_entry().index
         self.refresh_timer()

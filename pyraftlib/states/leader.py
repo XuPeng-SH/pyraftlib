@@ -28,11 +28,13 @@ class Leader(State):
             request.term = self.log.get_current_term()
             request.leaderId = self.name
             request.peer_id = self.name
-            last_entry = self.log.last_log_entry()
-            request.prevLogIndex = last_entry.index
-            request.prevLogTerm = last_entry.term
+            prev_entry = self.log.get_entry(peer.next_index - 1)
+            prev_entry = prev_entry if prev_entry else LogEntry()
+            request.prevLogIndex = prev_entry.index
+            request.prevLogTerm = prev_entry.term
             entries = self.log.get_entries(from_index=peer.next_index)
             request.entries.extend(entries)
+            request.leaderCommit = self.volatile_state.commit_index
             requests[peer_id] = request
         self.service.send_append_entries(requests)
 

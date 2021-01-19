@@ -195,7 +195,7 @@ class JsonHandle(BaseLog):
         entries = self.get_entries(index, 1)
         if len(entries) == 0:
             return None
-        assert len(entries) == 1
+        assert len(entries) == 1, f'len of entries is {len(entries)}'
         return entries[0]
 
     def get_entries(self, from_index=None, count=None):
@@ -209,8 +209,10 @@ class JsonHandle(BaseLog):
             c_l_i = self.data_values_cache.first_index
 
             if from_index < c_l_i:
-                # logger.info(f'get_entries from_index={from_index} last_entry_index={last_entry.index}')
+                logger.info(f'get_entries from_index={from_index} last_entry_index={last_entry.index}')
                 entries = self.load_last_n_entries(last_entry.index - from_index + 1)
+                if count:
+                    entries = entries[0:count]
                 return entries
             else:
                 to_index = last_entry.index + 1
