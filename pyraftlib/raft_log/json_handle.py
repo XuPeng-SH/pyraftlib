@@ -111,10 +111,12 @@ class JsonHandle(BaseLog):
 
         self.data_log = os.path.join(self.raft_log_dir, RAFT_LOG_DATA_NAME_TEMPLATE.format(peer_id))
         self.data_values_cache = DataCache(capacity=50)
+        self.pos_index = []
+        self.last_pos = 0
 
         lines = []
         if os.path.exists(self.data_log):
-            lines = self.load_last_n_entries()
+            lines = self.load_last_n_entries(update=True)
 
         if len(lines) >= self.data_values_cache.capacity:
             start_pos = len(lines) - self.data_values_cache.capacity
@@ -126,12 +128,14 @@ class JsonHandle(BaseLog):
         self.lock = threading.RLock()
         self.data_lock = threading.RLock()
 
-    def load_last_n_entries(self, n=None):
+    def load_last_n_entries(self, n=None, update=False):
         entries = []
         with open(self.data_log, 'rb') as f:
             buf = f.read()
             pos = 0
             while pos < len(buf):
+                # self.pos_index[len(entries) + 1] = pos
+                update and self.pos_index.append(pos)
                 msg_len, new_pos = _DecodeVarint32(buf, pos)
                 pos = new_pos
                 msg_buf = buf[pos:pos+msg_len]
@@ -139,6 +143,8 @@ class JsonHandle(BaseLog):
                 entry = LogEntry()
                 entry.ParseFromString(msg_buf)
                 entries.append(entry)
+            if update:
+                self.last_pos = len(buf)
         if n is None or n >= len(entries):
             return entries
         return entries[len(entries)-n:]
@@ -173,12 +179,14 @@ class JsonHandle(BaseLog):
             to_dump = bytes()
             self.data_values_cache.start_mutation()
             last_index = self.data_values_cache.last_entry.index
+            extra_pos = []
             for i, entry in enumerate(entries):
                 if entry.index != last_index + i + 1:
                     logger.error(f'Entry {entry.index} should be consestive from last_index {last_index + i + 1}')
                     self.data_values_cache.abort_mutation()
                     return False
                 self.data_values_cache.insert_mutation(entry)
+                extra_pos.append(self.last_pos + len(to_dump))
                 to_dump += _VarintBytes(entry.ByteSize()) + entry.SerializeToString()
             try:
                 with open(self.data_log, 'ab') as f:
@@ -189,6 +197,10 @@ class JsonHandle(BaseLog):
                 return False
 
             self.data_values_cache.commit_mutation()
+            self.last_pos += len(to_dump)
+            self.pos_index.extend(extra_pos)
+            # logger.info(f'last_pos = {self.last_pos} length of pos_index = {len(self.pos_index)} extra_pos = {extra_pos}')
+
             return True
 
     def get_entry(self, index):
@@ -220,3 +232,26 @@ class JsonHandle(BaseLog):
                     to_index = min(to_index, from_index + count)
 
                 return self.data_values_cache.cache[(from_index - c_l_i):(to_index - c_l_i)]
+
+
+    def truncate_entries(self, from_index):
+        if from_index == 0:
+            return True
+        with self.data_lock:
+            last_entry = self.last_log_entry()
+            if from_index > last_entry.index:
+                return
+
+            pos = self.pos_index[from_index - 1]
+
+            try:
+                with open(self.data_log, 'wb') as f:
+                    f.truncate(pos)
+            except Exception as exp:
+                logger.error(f'truncate_entries from index {from_index} error: {exp}')
+                return False
+
+            self.last_pos = self.pos_index[pos]
+            self.pos_index = self.pos_index[:from_index - 1]
+
+        return True

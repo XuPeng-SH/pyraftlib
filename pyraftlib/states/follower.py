@@ -66,8 +66,21 @@ class Follower(State):
             self.volatile_state.leader_id = request.leaderId
         else:
             assert self.volatile_state.leader_id == request.leaderId, f'current_leader={self.volatile_state.leader_id}, request.leader={request.leaderId}'
-        self.log.log_entries(request.entries)
-        response.last_log_index = self.log.last_log_entry().index
+
+        to_log_entries = []
+        last_log_entry = self.log.last_log_entry()
+        for idx, entry in enumerate(request.entries):
+            if entry.index > last_log_entry.index:
+                to_log_entries.extend(request.entries[idx:])
+                break
+            local_entry = self.log.get_entry(entry.index)
+            if local_entry.term != entry.term:
+                self.log.truncate_entries(entry.index)
+                break
+            to_log_entries.append(entry)
+
+        self.log.log_entries(to_log_entries)
+        response.last_log_index = last_log_entry.index
         self.refresh_timer()
         response.success = True
         return response

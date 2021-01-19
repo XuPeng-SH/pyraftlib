@@ -35,3 +35,6 @@ class MockHandle(BaseLog):
 
     def get_entries(self, from_index=None, count=None):
         return []
+
+    def truncate_entries(self, from_index):
+        pass
