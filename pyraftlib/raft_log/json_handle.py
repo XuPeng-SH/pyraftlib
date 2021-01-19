@@ -110,7 +110,7 @@ class JsonHandle(BaseLog):
                 json.dump(self.meta_values, f)
 
         self.data_log = os.path.join(self.raft_log_dir, RAFT_LOG_DATA_NAME_TEMPLATE.format(peer_id))
-        self.data_values_cache = DataCache(capacity=1000)
+        self.data_values_cache = DataCache(capacity=2000)
 
         lines = []
         if os.path.exists(self.data_log):
