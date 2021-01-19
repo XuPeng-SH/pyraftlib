@@ -74,7 +74,7 @@ class DataCache:
                 return False
             self.cache.extend(self.dirty)
             if self.capacity != -1 and len(self.cache) > self.capacity:
-                self.cache = self.cache[len(cache) - self.capacity:-1]
+                self.cache = self.cache[len(self.cache) - self.capacity:]
 
         self.mutation_lock.release()
         return True
@@ -110,31 +110,38 @@ class JsonHandle(BaseLog):
                 json.dump(self.meta_values, f)
 
         self.data_log = os.path.join(self.raft_log_dir, RAFT_LOG_DATA_NAME_TEMPLATE.format(peer_id))
-        self.data_values_cache = DataCache(capacity=2000)
+        self.data_values_cache = DataCache(capacity=50)
 
         lines = []
         if os.path.exists(self.data_log):
-            with open(self.data_log, 'rb') as f:
-                buf = f.read()
-                n = 0
-                while n < len(buf):
-                    msg_len, new_pos = _DecodeVarint32(buf, n)
-                    n = new_pos
-                    msg_buf = buf[n:n+msg_len]
-                    n += msg_len
-                    entry = LogEntry()
-                    entry.ParseFromString(msg_buf)
-                    lines.append(entry)
+            lines = self.load_last_n_entries()
 
         if len(lines) >= self.data_values_cache.capacity:
             start_pos = len(lines) - self.data_values_cache.capacity
-            lines = lines[start_pos:-1]
+            lines = lines[start_pos:]
 
         for entry in lines:
             self.data_values_cache.insert(entry)
 
         self.lock = threading.RLock()
         self.data_lock = threading.RLock()
+
+    def load_last_n_entries(self, n=None):
+        entries = []
+        with open(self.data_log, 'rb') as f:
+            buf = f.read()
+            pos = 0
+            while pos < len(buf):
+                msg_len, new_pos = _DecodeVarint32(buf, pos)
+                pos = new_pos
+                msg_buf = buf[pos:pos+msg_len]
+                pos += msg_len
+                entry = LogEntry()
+                entry.ParseFromString(msg_buf)
+                entries.append(entry)
+        if n is None or n >= len(entries):
+            return entries
+        return entries[len(entries)-n:]
 
     def _update(self, **kwargs):
         with self.lock:
@@ -168,7 +175,7 @@ class JsonHandle(BaseLog):
             last_index = self.data_values_cache.last_entry.index
             for i, entry in enumerate(entries):
                 if entry.index != last_index + i + 1:
-                    logger.error(f'Entries should be consestive from last_index')
+                    logger.error(f'Entry {entry.index} should be consestive from last_index {last_index + i + 1}')
                     self.data_values_cache.abort_mutation()
                     return False
                 self.data_values_cache.insert_mutation(entry)
@@ -192,10 +199,15 @@ class JsonHandle(BaseLog):
             last_entry = self.last_log_entry()
             if from_index > last_entry.index:
                 return []
-            to_index = last_entry.index + 1
-            if count is not None:
-                to_index = min(to_index, from_index + count)
-
-            #TODO Temp to query always from memory
             c_l_i = self.data_values_cache.first_index
-            return self.data_values_cache.cache[(from_index - c_l_i):(to_index - c_l_i)]
+
+            if from_index < c_l_i:
+                entries = self.load_last_n_entries(last_entry.index - from_index)
+                return entries
+            else:
+                to_index = last_entry.index + 1
+                if count is not None:
+                    to_index = min(to_index, from_index + count)
+
+                #TODO Temp to query always from memory
+                return self.data_values_cache.cache[(from_index - c_l_i):(to_index - c_l_i)]
