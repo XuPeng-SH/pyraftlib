@@ -32,7 +32,6 @@ class Leader(State):
             request.prevLogIndex = last_entry.index
             request.prevLogTerm = last_entry.term
             entries = self.log.get_entries(from_index=peer.next_index)
-            logger.info(f'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk pid={peer_id} ni={peer.next_index} len={len(entries)}')
             request.entries.extend(entries)
             requests[peer_id] = request
         self.service.send_append_entries(requests)
@@ -99,7 +98,6 @@ class Leader(State):
         current_term, success = super().on_peer_append_entries_response(response)
         if not success:
             return current_term, success
-        logger.info(f'---------------------------------- xxxxxxxxxxxxxxxxx ----------------------------------------')
 
         if current_term < response.term:
             self.service.convert_to(Follower)
@@ -118,8 +116,9 @@ class Leader(State):
     def on_receive_log_entries(self, entries):
         for event in entries:
             logger.info(f'received entry {event.entry.entry}')
-            self.log.log_entries([event.entry])
-            event.mark_done()
+            succes = self.log.log_entries([event.entry])
+            # TODO
+            event.mark_done(f'NoSeq')
 
     def shutdown(self):
         self.timer.submit(TerminateEvent())

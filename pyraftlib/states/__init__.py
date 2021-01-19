@@ -64,7 +64,7 @@ class State:
 
     def on_receive_log_entries(self, entries):
         for event in entries:
-            logger.error(f'NotLeader Error for event {event.entry.entry}')
+            # logger.error(f'NotLeader Error for event {event.entry.entry}')
             event.mark_done(error=f'NotLeader')
 
     # def on_receive_log_entries(self, entries):
