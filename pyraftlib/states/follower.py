@@ -52,7 +52,11 @@ class Follower(State):
             self.log.set_current_term(request.term)
             self.log.set_vote_for(0)
             self.volatile_state.leader_id = request.peer_id
+<<<<<<< HEAD
         assert self.volatile_state.leader_id == request.leaderId, f'current_leader={self.volatile_state.leader_id}, request.leader={request.leaderId}'
+=======
+        assert self.volatile_state.leader_id == request.leaderId, f'current_leader={volatile_state.leader_id}, request.leader={request.leaderId}'
+>>>>>>> master
         self.log.log_entries(request.entries)
         response.last_log_index = self.log.last_log_entry().index
         self.refresh_timer()
