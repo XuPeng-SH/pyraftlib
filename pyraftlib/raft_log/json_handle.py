@@ -191,6 +191,13 @@ class JsonHandle(BaseLog):
             self.data_values_cache.commit_mutation()
             return True
 
+    def get_entry(self, index):
+        entries = self.get_entries(index, 1)
+        if len(entries) == 0:
+            return None
+        assert len(entries) == 1
+        return entries[0]
+
     def get_entries(self, from_index=None, count=None):
         ret = []
         if count == 0:
@@ -202,12 +209,12 @@ class JsonHandle(BaseLog):
             c_l_i = self.data_values_cache.first_index
 
             if from_index < c_l_i:
-                entries = self.load_last_n_entries(last_entry.index - from_index)
+                # logger.info(f'get_entries from_index={from_index} last_entry_index={last_entry.index}')
+                entries = self.load_last_n_entries(last_entry.index - from_index + 1)
                 return entries
             else:
                 to_index = last_entry.index + 1
                 if count is not None:
                     to_index = min(to_index, from_index + count)
 
-                #TODO Temp to query always from memory
                 return self.data_values_cache.cache[(from_index - c_l_i):(to_index - c_l_i)]
