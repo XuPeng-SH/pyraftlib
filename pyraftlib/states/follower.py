@@ -81,6 +81,7 @@ class Follower(State):
 
         self.log.log_entries(to_log_entries)
         response.last_log_index = last_log_entry.index
+        assert self.volatile_state.leader_id == request.leaderId, f'current_leader={self.volatile_state.leader_id}, request.leader={request.leaderId}'
         self.refresh_timer()
         response.success = True
         return response
