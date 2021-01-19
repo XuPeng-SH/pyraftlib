@@ -22,7 +22,7 @@ class Leader(State):
         return 3* 12 ** -1
 
     def send_append_entries(self):
-        requests = []
+        requests = {}
         for peer_id, peer in self.service.peers.items():
             request = AppendEntriesRequest()
             request.term = self.log.get_current_term()
@@ -32,7 +32,8 @@ class Leader(State):
             request.prevLogIndex = last_entry.index
             request.prevLogTerm = last_entry.term
             entries = self.log.get_entries(from_index=peer.next_index)
-            request.entries = entries
+            logger.info(f'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk pid={peer_id} ni={peer.next_index} len={len(entries)}')
+            request.entries.extend(entries)
             requests[peer_id] = request
         self.service.send_append_entries(requests)
 
@@ -95,9 +96,10 @@ class Leader(State):
 
     def on_peer_append_entries_response(self, response):
         self.service.set_last_resp_ts(response.peer_id, time.time())
-        current_term, to_skip = super().on_peer_append_entries_response(response)
-        if to_skip:
-            return current_term, False
+        current_term, success = super().on_peer_append_entries_response(response)
+        if not success:
+            return current_term, success
+        logger.info(f'---------------------------------- xxxxxxxxxxxxxxxxx ----------------------------------------')
 
         if current_term < response.term:
             self.service.convert_to(Follower)
@@ -107,6 +109,9 @@ class Leader(State):
 
         # TODO:
         logger.info(f'{self} Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
+        peer_id = response.peer_id
+        peer = self.service.peers[peer_id]
+        peer.next_index = response.last_log_index + 1
 
         return response.term, True
 
