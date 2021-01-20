@@ -10,7 +10,7 @@ from pyraftlib.states.follower import Follower
 
 logger = logging.getLogger(__name__)
 
-MAX_ENTRY_BATCH_SIZE = 4096
+MAX_ENTRY_BATCH_SIZE = 10
 class Leader(State):
     Display = 'Leader'
     def __init__(self, name=None, stale_state=None, service=None):
@@ -110,6 +110,8 @@ class Leader(State):
 
         # TODO:
         logger.info(f'{self} Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
+
+        logger.info(f'{self} state id is {id(self)}, current active {self.service.state} id is {self.service.state}')
         peer_id = response.peer_id
         peer = self.service.peers[peer_id]
         peer.next_index = response.last_log_index + 1

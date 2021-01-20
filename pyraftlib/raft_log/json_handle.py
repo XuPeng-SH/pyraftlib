@@ -151,11 +151,11 @@ class JsonHandle(BaseLog):
         return entries[len(entries)-n:]
 
     def load_entries(self, from_index=None, to_index=None, max_size=None):
-        if from_index is None:
+        if from_index is None or from_index <= 0:
             from_index = 1
         if to_index is None:
             to_index = self.last_log_entry().index
-        if from_index < to_index:
+        if from_index > to_index:
             return []
         last_pos = self.pos_index[from_index-1]
         accm = 0
@@ -169,8 +169,9 @@ class JsonHandle(BaseLog):
             if max_size is not None and accm >= max_size:
                 break
 
+        entries = []
         with open(self.data_log, 'rb') as f:
-            f.seek(self.pos_index(from_index -1))
+            f.seek(self.pos_index[from_index -1])
             buf = f.read(accm)
             pos = 0
             while pos < len(buf):
@@ -182,9 +183,7 @@ class JsonHandle(BaseLog):
                 entry.ParseFromString(msg_buf)
                 entries.append(entry)
 
-
-        # with open(self.data_log, 'rb') as f:
-
+        return entries
 
     def _update(self, **kwargs):
         with self.lock:
@@ -244,12 +243,14 @@ class JsonHandle(BaseLog):
         entries = self.get_entries(index, 1)
         if len(entries) == 0:
             return None
-        assert len(entries) == 1, f'len of entries is {len(entries)}'
+        assert len(entries) == 1, f'get entry of {index} get len of entries is {len(entries)}'
         return entries[0]
 
-    def get_entries(self, from_index=None, count=None, batch_size=-1):
+    def get_entries(self, from_index, count=None, batch_size=None):
         ret = []
-        if count == 0 or batch_size == 0:
+        if from_index <= 0:
+            from_index = 1
+        if (count is not None and count <= 0) or batch_size == 0:
             return ret
         with self.data_lock:
             last_entry = self.last_log_entry()
@@ -258,10 +259,15 @@ class JsonHandle(BaseLog):
             c_l_i = self.data_values_cache.first_index
 
             if from_index < c_l_i:
-                logger.info(f'get_entries from_index={from_index} last_entry_index={last_entry.index}')
-                entries = self.load_last_n_entries(last_entry.index - from_index + 1)
-                if count:
-                    entries = entries[0:count]
+                # logger.info(f'get_entries from_index={from_index} last_entry_index={last_entry.index}')
+                # entries = self.load_last_n_entries(last_entry.index - from_index + 1)
+                to_index = None if count is None else from_index + count - 1
+                # logger.info(f'e_s_idx={entries[0].index}, e_e_idx={entries[-1].index}')
+                # logger.info(f'from_index={from_index} to_index={to_index} max_size={batch_size}')
+                entries = self.load_entries(from_index=from_index, to_index=to_index, max_size=batch_size)
+                # len(entries) > 0 and logger.info(f'd_s_idx={entries[0].index}, d_e_idx={entries[-1].index}')
+                # if count:
+                #     entries = entries[0:count]
                 return entries
             else:
                 to_index = last_entry.index + 1
