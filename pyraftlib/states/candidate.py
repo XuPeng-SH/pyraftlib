@@ -2,7 +2,7 @@ import logging
 import time
 
 from pyraftlib.states.follower import Follower
-from pyraftlib.events import VoteRequestEvent
+# from pyraftlib.events import VoteRequestEvent
 from pyraftlib.raft_pb2 import (RequestVoteRequest, RequestVoteResponse,
         AppendEntriesRequest, AppendEntriesResponse)
 from pyraftlib.events import TerminateEvent
@@ -22,8 +22,8 @@ class Candidate(Follower):
     def send_vote_requests(self):
         logger.info(f'Candidate {self.name} is Broadcasting RequestVote')
         self.log.set_vote_for(self.name)
-        event = VoteRequestEvent(term=self.log.get_current_term(),
-                                 source=self.name)
+        # event = VoteRequestEvent(term=self.log.get_current_term(),
+        #                          source=self.name)
         request = RequestVoteRequest()
         request.term = self.log.get_current_term()
         request.candidateId = self.name

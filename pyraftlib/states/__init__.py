@@ -53,7 +53,8 @@ class State:
         self.log = LogFactory.build(self.service.conf, peer_id=self.service.self_peer.id)
 
     def run_loop_func(self):
-        time.sleep(0.5)
+        # time.sleep(0.5)
+        pass
 
     def on_peer_append_entries_response(self, response):
         current_term = self.log.get_current_term()

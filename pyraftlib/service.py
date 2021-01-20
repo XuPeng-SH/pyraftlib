@@ -11,6 +11,7 @@ from collections import defaultdict
 
 from pyraftlib.rpc_server import RpcServer
 from pyraftlib.states.follower import Follower
+from pyraftlib.events import AppendEntriesRequestEvent, LogEntriesEvent, RequestVoteRequestEvent
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,7 @@ class Service:
         self.terminated = False
         self.log_entries_queue = queue.Queue()
         self.log_entries_loop = threading.Thread(target=self.do_log_entries_loop)
+        self.raft_event_queue = queue.Queue()
 
     def load_conf_from_yaml_path(self, yaml_path):
         with open(yaml_path, 'r') as f:
@@ -101,9 +103,24 @@ class Service:
 
         logger.info(f'log_entries loop exited')
 
+    def handle_events(self):
+        try:
+            event = self.raft_event_queue.get_nowait()
+        except queue.Empty:
+            return
+        logger.info(f'handling event {event.__class__.__name__}')
+        if isinstance(event, AppendEntriesRequestEvent):
+            response = self.state.on_peer_append_entries(event.request)
+            event.response = response
+            event.mark_done()
+        elif isinstance(event, LogEntriesEvent):
+            self.state.on_receive_log_entries(event.entries)
+            event.mark_done()
+
     def do_raft_loop(self):
         while self.loop_running:
             self.state.run_loop_func()
+            self.handle_events()
 
         logger.info(f'raft_loop exited')
 
@@ -153,10 +170,16 @@ class Service:
         return self.state.on_peer_vote_request(request)
 
     def on_peer_append_entries(self, request):
-        return self.state.on_peer_append_entries(request)
+        # return self.state.on_peer_append_entries(request)
+        event = AppendEntriesRequestEvent(request)
+        self.raft_event_queue.put(event)
+        event.result()
+        return event.response
 
     def on_receive_log_entries(self, entries):
         return self.state.on_receive_log_entries(entries)
+        # event = LogEntriesEvent(entries)
+        # self.raft_event_queue.put(event)
 
 
 if __name__ == '__main__':
