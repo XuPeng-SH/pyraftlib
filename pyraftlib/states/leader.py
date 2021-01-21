@@ -10,7 +10,7 @@ from pyraftlib.states.follower import Follower
 
 logger = logging.getLogger(__name__)
 
-MAX_ENTRY_BATCH_SIZE = 10
+MAX_ENTRY_BATCH_SIZE = 100
 class Leader(State):
     Display = 'Leader'
     def __init__(self, name=None, stale_state=None, service=None):

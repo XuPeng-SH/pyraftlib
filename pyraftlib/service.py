@@ -120,7 +120,7 @@ class Service:
     def do_raft_loop(self):
         while self.loop_running:
             self.state.run_loop_func()
-            self.handle_events()
+            # self.handle_events()
 
         logger.info(f'raft_loop exited')
 
@@ -170,7 +170,7 @@ class Service:
         return self.state.on_peer_vote_request(request)
 
     def on_peer_append_entries(self, request):
-        # return self.state.on_peer_append_entries(request)
+        return self.state.on_peer_append_entries(request)
         event = AppendEntriesRequestEvent(request)
         self.raft_event_queue.put(event)
         event.result()
