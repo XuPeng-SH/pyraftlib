@@ -45,6 +45,7 @@ class State:
         self.name = stale_state.name
         self.service = stale_state.service
         self.volatile_state = stale_state.volatile_state
+        self.volatile_state.leader_id = None
         self.log = stale_state.log
 
     def init(self):

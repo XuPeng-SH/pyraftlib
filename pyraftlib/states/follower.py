@@ -60,9 +60,11 @@ class Follower(State):
         if request.term > current_term:
             self.log.set_current_term(request.term)
             self.log.set_vote_for(0)
+            logger.info(f'{id(self)} {self} 1. set volatile_state.leader_id from {self.volatile_state.leader_id} to {request.peer_id}')
             self.volatile_state.leader_id = request.peer_id
 
         if not self.volatile_state.leader_id:
+            logger.info(f'{id(self)} {self} 2. set volatile_state.leader_id from {self.volatile_state.leader_id} to {request.peer_id}')
             self.volatile_state.leader_id = request.leaderId
         else:
             assert self.volatile_state.leader_id == request.leaderId, f'current_leader={self.volatile_state.leader_id}, request.leader={request.leaderId}'
@@ -81,7 +83,7 @@ class Follower(State):
 
         self.log.log_entries(to_log_entries)
         response.last_log_index = last_log_entry.index
-        assert self.volatile_state.leader_id == request.leaderId, f'current_leader={self.volatile_state.leader_id}, request.leader={request.leaderId}'
+        # assert self.volatile_state.leader_id == request.leaderId, f'current_leader={self.volatile_state.leader_id}, request.leader={request.leaderId}'
         self.refresh_timer()
         response.success = True
         return response

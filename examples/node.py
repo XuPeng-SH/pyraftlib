@@ -33,7 +33,7 @@ def Run(yaml_path):
                     time.sleep(0.2)
                 elif event.error == f'NoSeq':
                     i += 1
-                    time.sleep(0.1)
+                    time.sleep(0.001)
                 else:
                     # time.sleep(0.5)
                     pass

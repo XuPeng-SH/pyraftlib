@@ -3,7 +3,7 @@ import time
 
 from pyraftlib.states import State
 from pyraftlib.raft_pb2 import (RequestVoteRequest, AppendEntriesRequest,
-        RequestVoteResponse, AppendEntriesResponse)
+        RequestVoteResponse, AppendEntriesResponse, LogEntry)
 from pyraftlib.workers.thread_worker import ThreadWorker
 from pyraftlib.events import TerminateEvent, DelayEvent
 from pyraftlib.states.follower import Follower
@@ -103,10 +103,10 @@ class Leader(State):
             return current_term, success
 
         if current_term < response.term:
+            self.volatile_state.leader_id = None
             self.service.convert_to(Follower)
             self.log.set_current_term(response.term)
             self.log.set_vote_for(None)
-            self.volatile_state.leader_id = None
 
         # TODO:
         logger.info(f'{self} Recieving AE Response: term={response.term} success={response.success} peer_id={response.peer_id}')
